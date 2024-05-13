@@ -1,0 +1,12 @@
+# Ignore everything in the data folder
+data/*
+
+# Ignore everything in the data_test folder
+data_test/*
+outputs/*
+# Other rules
+__pycache__/
+*.pyc
+*.log
+*.sqlite3
+outputs/model_files/model.safetensors
