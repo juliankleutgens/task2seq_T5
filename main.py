@@ -65,8 +65,8 @@ class YourDataSetClass(Dataset):
         target_string = self.target_text[index]
 
         # ------- Tokenize source text  ------
-        source_text_tokens = self.tokenizer.tokenize(source_text)
-        print(len(source_text_tokens))
+        #source_text_tokens = self.tokenizer.tokenize(source_text)
+        #print(len(source_text_tokens))
         source_encoded = self.tokenizer.encode_plus(
             source_text,
             max_length=self.source_len,
@@ -87,7 +87,8 @@ class YourDataSetClass(Dataset):
         if len(target_ids) < self.target_len:
             padding_length = self.target_len - len(target_ids)
             target_ids = torch.cat([target_ids, torch.full((padding_length,), self.tokenizer.pad_token_id, dtype=torch.long)])
-
+        if len(target_ids) > self.target_len:
+            target_ids = target_ids[:self.target_len]
         # Create attention masks for target
         target_mask = torch.where(target_ids == self.tokenizer.pad_token_id, 0, 1)
 
@@ -153,9 +154,9 @@ def validate(epoch, tokenizer, model, device, loader):
                 one_sample_pred = []
                 for _id in gen_id:
                     token = tokenizer.decode(_id, skip_special_tokens=True, clean_up_tokenization_spaces=True)
-                    if token != 'pad':
-                        one_sample_pred.append(token)
-                preds.append(one_sample_pred)
+                    one_sample_pred.append(token)
+                our_token_sample = map_back(one_sample_pred)
+                preds.append(our_token_sample)
 
             # --- convert the targets into a list ----- #
             target = []
@@ -163,10 +164,9 @@ def validate(epoch, tokenizer, model, device, loader):
                 one_sample_target = []
                 for _id in t:
                     token = tokenizer.decode(_id, skip_special_tokens=True, clean_up_tokenization_spaces=True)
-                    if token != 'pad':
-                        one_sample_target.append(token)
+                    one_sample_target.append(token)
                 our_token_sample = map_back(one_sample_target)
-                target.append(one_sample_target)
+                target.append(our_token_sample)
 
                 #target.append(tokenizer.decode(t, skip_special_tokens=True, clean_up_tokenization_spaces=True))
             if _ % 10 == 0:
@@ -291,20 +291,21 @@ if __name__ == "__main__":
 
     df.head()
     """
+    max_samples = 2
     # ------------------- get Training data -------------------
-    paths = ['/data/ct_schema', '/data/ct_schema_all', '/data/gl_schema', '/data/or_schema']
-    paths = ['/data/ct_schema','/data/or_schema']
+    #paths = ['/data/ct_schema', '/data/ct_schema_all', '/data/gl_schema', '/data/or_schema', '/Users/juliankleutgens/training_data']
+    paths = ['/data/gl_schema', '/Users/juliankleutgens/training_data']
     dfs_train_list = []
     for path in paths:
-        df = load_data(path, maxsamples=None)
+        df = load_data(path, maxsamples=max_samples)
         dfs_train_list.append(df)
 
     # ------------------- get Testing data -------------------
     paths_test = ['/data_test/ct_schema', '/data_test/gl_schema', '/data_test/or_schema']
-    paths_test = ['/data_test/ct_schema','/data_test/or_schema']
+    #paths_test = ['/data_test/ct_schema','/data_test/or_schema']
     dfs_test_list = []
     for path in paths_test:
-        df = load_data(path, maxsamples=None)
+        df = load_data(path, maxsamples=max_samples)
         dfs_test_list.append(df)
 
     # ------------------- get new mapping if necessary -------------------
@@ -349,10 +350,10 @@ if __name__ == "__main__":
     console=Console(record=True)
     model_params={
         "MODEL":"t5-small",             # model_type: t5-base/t5-large
-        "TRAIN_BATCH_SIZE":8,          # training batch size
+        "TRAIN_BATCH_SIZE":2,          # training batch size
         "VALID_BATCH_SIZE":8,          # validation batch size
-        "TRAIN_EPOCHS":1,              # number of training epochs
-        "VAL_EPOCHS":1,                # number of validation epochs
+        "TRAIN_EPOCHS":5,              # number of training epochs
+        "VAL_EPOCHS":2,                # number of validation epochs
         "LEARNING_RATE":1e-4,          # learning rate
         "MAX_SOURCE_TEXT_LENGTH":2048,  # max length of source text
         "MAX_TARGET_TEXT_LENGTH":256,   # max length of target text

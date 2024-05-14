@@ -149,7 +149,7 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
     if 'EoF' in extra_token:
         tokenstoMap.append('#EoF')
     tokenstoMap.append('#newline')
-    #tokenstoMap.append('O', 'x', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'UNITY', 'ORIGIN', 'TWO_BY_TWO', 'NEG_ONE', 'UP', 'DOWN_LEFT', 'DOWN_RIGHT', 'DOWN', 'LEFT', 'RIGHT', 'UP_LEFT', 'UP_RIGHT', 'DOWN_LEFT_ONE', 'DOWN_RIGHT_ONE', 'DOWN_ONE', 'LEFT_ONE', 'RIGHT_ONE', 'UP_LEFT_ONE', 'UP_RIGHT_ONE', 'DOWN_LEFT_TWO', 'DOWN_RIGHT_TWO', 'DOWN_TWO', 'LEFT_TWO', 'RIGHT_TWO', 'UP_LEFT_TWO', 'UP_RIGHT_TWO', 'DOWN_LEFT_THREE', 'DOWN_RIGHT_THREE', 'DOWN_THREE', 'LEFT_THREE', 'RIGHT_THREE', 'UP_LEFT_THREE', 'UP_RIGHT_THREE', 'DOWN_LEFT_FOUR', 'DOWN_RIGHT_FOUR', 'DOWN_FOUR', 'LEFT_FOUR', 'RIGHT_FOUR', 'UP_LEFT_FOUR', 'UP_RIGHT_FOUR', 'DOWN_LEFT_FIVE', 'DOWN_RIGHT_FIVE', 'DOWN_FIVE', 'LEFT_FIVE', 'RIGHT_FIVE', 'UP_LEFT_FIVE', 'UP_RIGHT_FIVE', 'DOWN_LEFT_SIX', 'DOWN_RIGHT_SIX', 'DOWN_SIX', 'LEFT_SIX', 'RIGHT_SIX', 'UP_LEFT_SIX', 'UP_RIGHT_SIX', 'DOWN_LEFT_SEVEN', 'DOWN_RIGHT_SEVEN', 'DOWN_SEVEN', 'LEFT_SEVEN', 'RIGHT_SEVEN', 'UP_LEFT_SEVEN', 'UP_RIGHT_SEVEN', 'DOWN_LEFT_EIGHT', 'DOWN_RIGHT_EIGHT', 'DOWN_EIGHT', 'LEFT_EIGHT', 'RIGHT_EIGHT', 'UP_LEFT_EIGHT', 'UP_RIGHT_EIGHT', 'DOWN_LEFT_NINE', 'DOWN_RIGHT_NINE', 'DOWN_NINE', 'LEFT_NINE', 'RIGHT_NINE', 'UP_LEFT_NINE', 'UP_RIGHT_NINE', 'DOWN_LEFT_TEN', 'DOWN_RIGHT_TEN', 'DOWN_TEN', 'LEFT_TEN', 'RIGHT_TEN', 'UP_LEFT_TEN', 'UP_RIGHT_TEN', 'DOWN_LEFT_UNITY', 'DOWN_RIGHT_UNITY', 'DOWN_UNITY', 'LEFT_UNITY', 'RIGHT_UNITY', 'UP_LEFT_UNITY', 'UP_RIGHT_UNITY', 'DOWN_LEFT_ORIGIN', 'DOWN_RIGHT_ORIGIN', 'DOWN_ORIGIN', 'LEFT_ORIGIN', 'RIGHT_ORIGIN', 'UP_LEFT_ORIGIN', 'UP_RIGHT_ORIGIN', 'DOWN_LEFT_TWO_BY_TWO', 'DOWN_RIGHT_TWO_BY_TWO', 'DOWN_TWO_BY_TWO', 'LEFT_TWO_BY_TWO', 'RIGHT_TWO_BY_TWO
+    tokenstoMap = tokenstoMap + ['O', 'x', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'UNITY', 'ORIGIN', 'TWO_BY_TWO', 'NEG_ONE', 'UP', 'DOWN_LEFT', 'DOWN_RIGHT', 'DOWN', 'LEFT', 'RIGHT', 'UP_LEFT', 'UP_RIGHT', 'DOWN_LEFT_ONE', 'DOWN_RIGHT_ONE', 'DOWN_ONE', 'LEFT_ONE', 'RIGHT_ONE']
 
     tokenstoMap = list(set(tokenstoMap))
     print('There are ', len(tokenstoMap), ' tokens to map')
@@ -323,87 +323,3 @@ if __name__ == "__main__":
     print("---------- Reconstructed Code ----------")
     print(recon_code[:2000])
     print()
-    """
-    # List of custom tokens
-    # all tokens from the dsl.py file + the tokens from the solver.py file
-    dsl_func = get_all_dsl_tokens()
-    tokenstoMap = dsl_func
-    if 'sym_aft_func' in extra_token:
-        tokenstoMap.append(';')
-    if 'BoF' in extra_token:
-        tokenstoMap.append('#BoF')
-    if 'EoF' in extra_token:
-        tokenstoMap.append('#EoF')
-    tokenstoMap.append('#newline')
-    dsl_gene = list_of_tokens + dsl_func
-    custom_tokens = list(set(dsl_gene))
-    print("Number of custom tokens:", len(custom_tokens))
-
-
-    # Load existing model and tokenizer
-    model = T5ForConditionalGeneration.from_pretrained('t5-small')
-    tokenizer = T5Tokenizer.from_pretrained('t5-small')
-
-
-    # Get all tokens from the tokenizer's vocabulary
-    all_tokens = list(tokenizer.get_vocab().keys())
-    print("Number of tokens:", len(all_tokens))
-
-    # tokenize the string_print with the tokeniozer from the T5 model
-    string_tokens_to_t5 = tokenizer.tokenize(string_print)
-    print(string_print[:500])
-    print("Tokens:", string_tokens_to_t5[:200])
-
-    # Get the token mappings
-    # only want a mapping for the tokens which are dsl functions
-    # but I don't want to map the tokens from the solver.py file
-    all_tokens_minus_used_solver = list(set(all_tokens) - set(string_tokens_to_t5))
-    # I want to see the ones that are in the dsl_func and not in the tokens_to_t5
-    tokens_to_t5 = list(set(string_tokens_to_t5))
-
-    # Example usage
-    loading_new_mappings = True
-    dsl_token_mappings = load_token_mappings(filename="dsl_token_mappings_T5.json")
-    if dsl_token_mappings is not None and not loading_new_mappings:
-        print("Loaded existing token mappings.")
-    else:
-        dsl_token_mappings = get_mapping(custom_tokens=tokenstoMap, T5_tokens=all_tokens_minus_used_solver)
-        save_token_mappings(dsl_token_mappings, filename="dsl_token_mappings_T5.json")
-
-
-    processed_text = preprocess_text(string_print, dsl_token_mappings)
-    print("Original Text:", string_print[:500])
-    print("Processed Text:", processed_text[:500])
-    T5_tokens_text = tokenizer.tokenize(processed_text)
-    print("Tokens:", T5_tokens_text[:500])
-
-    # Print the complete mapping
-    #print("Complete token mappings:", token_mappings)
-    """
-
-
-    """
-    # Add your custom tokens to the tokenizer
-    num_added_toks = tokenizer.add_tokens(custom_tokens)
-    print('We have added', num_added_toks, 'tokens')
-    
-    # Confirming which new tokens were successfully added
-    if num_added_toks > 0:
-        new_vocab = tokenizer.get_vocab()
-        added_tokens = [token for token in custom_tokens if token in new_vocab]
-        #print("Successfully added the following tokens:", added_tokens)
-    else:
-        print("No new tokens were added.")
-    
-    # Optional: Write these tokens to a file
-    with open("added_tokens.txt", "w") as file:
-        for token in added_tokens:
-            file.write(f"{token}\n")
-    
-    # Resize the token embeddings to fit the new tokenizer
-    model.resize_token_embeddings(len(tokenizer))
-    
-    
-    # Creating a token-to-ID mapping
-    token_to_id = {token: idx for idx, token in enumerate(custom_tokens)}
-    """

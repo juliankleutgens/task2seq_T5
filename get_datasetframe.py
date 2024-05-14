@@ -77,7 +77,11 @@ def load_data_with_T5_tokens(path='ct_schema', maxsamples=None, extra_token=['sy
 def load_data(path='ct_schema', maxsamples=None):
     dataset_dict = {'input': [], 'target': [], 'name': []}
     # Load the T5 tokenizer
-    tasks, solvers, file_names = _read_generated_json_files(path=path, max_sampels=maxsamples)
+    try :
+        tasks, solvers, file_names = _read_generated_json_files(path=path, max_sampels=maxsamples)
+    except:
+        tasks, solvers, file_names = _read_generated_json_files_saperatly(path=path, max_sampels=maxsamples)
+
 
     counter = 0
     for task, solver, name in zip(tasks, solvers, file_names):
@@ -91,6 +95,44 @@ def load_data(path='ct_schema', maxsamples=None):
         dataset_dict['name'].append(name)
 
     return dataset_dict
+
+def _read_generated_json_files_saperatly(path: str, max_sampels:int) -> List[Task]:
+
+    path_json = path + '/X/'
+    path_solver = path + '/Y/'
+    print('we are getting data from: ', path_json)
+    files = sorted(os.listdir(path_json))
+
+    tasks: List[Task] = []
+    solvers = []
+    #  read the solver.py file in a string
+
+    file_names = []
+    i = 0
+    current_dir = Path.cwd()
+    # Construct the path to the file within the current directory
+
+
+
+    for file_i in tqdm(files, desc="Decoding json files", leave=False):
+        if i == max_sampels:
+            break
+        try:
+            task = decode_json_task(os.path.join(path_json, file_i))
+            file_path = path_solver + file_i[:-5] + '.py'
+            with open(file_path, 'r') as file:
+                data = file.read()
+            solver = data
+
+        except Exception as e:
+            print(e)
+        else:
+            tasks.append(task)
+            solvers.append(solver)
+            file_names.append(file_i[:-5])
+        i += 1
+    return tasks, solvers, file_names
+
 
 if __name__ == "__main__":
     extra_token = ['sym_aft_func', 'BoF', 'EoF', 'var_to_num']
