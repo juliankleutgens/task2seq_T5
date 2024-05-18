@@ -32,7 +32,7 @@ def _read_generated_json_files(path: str, max_sampels:int) -> List[Task]:
         else:
             tasks.append(task)
             solvers.append(solver)
-            file_names.append(file)
+            file_names.append(file[:-5])
         i += 1
 
     return tasks, solvers, file_names
@@ -111,9 +111,6 @@ def _read_generated_json_files_saperatly(path: str, max_sampels:int) -> List[Tas
     i = 0
     current_dir = Path.cwd()
     # Construct the path to the file within the current directory
-
-
-
     for file_i in tqdm(files, desc="Decoding json files", leave=False):
         if i == max_sampels:
             break

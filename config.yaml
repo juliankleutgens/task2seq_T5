@@ -1,0 +1,41 @@
+max_samples: -1
+
+num_of_itr: 7500
+
+train_paths:
+  - '/home/jkleutgens/training_data'
+
+
+test_paths:
+  - '/home/jkleutgens/data_test/ct_schema'
+  - '/home/jkleutgens/data_test/gl_schema'
+  - '/home/jkleutgens/data_test/or_schema'
+
+load_new_mappings: false
+
+device: 'cpu'
+
+output_dir: './outputs/'
+
+extra_token:
+  - 'sym_aft_func'
+  - 'BoF'
+  - 'EoF'
+  - 'var_to_num'
+
+model_params:
+  MODEL: "t5-small"
+  TRAIN_BATCH_SIZE: 8
+  VALID_BATCH_SIZE: 8
+  TRAIN_EPOCHS: 10
+  VAL_EPOCHS: 1
+  LEARNING_RATE: 1.0e-4
+  MAX_SOURCE_TEXT_LENGTH: 2048
+  MAX_TARGET_TEXT_LENGTH: 256
+  SEED: 42
+
+wandb:
+  wandb_user: #"your_wandb_user"
+  wandb_project: #"your_wandb_project"
+  wandb_run_name: #"your_wandb_run_name"  # Optional
+  wandb_notes: #"your_wandb_notes"        # Optional
