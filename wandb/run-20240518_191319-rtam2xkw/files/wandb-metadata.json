@@ -1,0 +1,37 @@
+{
+    "os": "macOS-14.4.1-arm64-arm-64bit",
+    "python": "3.8.18",
+    "heartbeatAt": "2024-05-18T17:13:19.957622",
+    "startedAt": "2024-05-18T17:13:19.367961",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/Users/juliankleutgens/PycharmProjects/task2seq_T5/main.py",
+    "codePathLocal": "main.py",
+    "codePath": "main.py",
+    "git": {
+        "remote": "git@github.com:juliankleutgens/task2seq_T5.git",
+        "commit": "442e9a34b2b9b4164cddf34d92c0edd33af9bca7"
+    },
+    "email": "164042205+juliankleutgens@users.noreply.github.com",
+    "root": "/Users/juliankleutgens/PycharmProjects/task2seq_T5",
+    "host": "student-net-vpn-2330.intern.ethz.ch",
+    "username": "juliankleutgens",
+    "executable": "/Users/juliankleutgens/opt/anaconda3/envs/arc_project/bin/python",
+    "cpu_count": 10,
+    "cpu_count_logical": 10,
+    "disk": {
+        "/": {
+            "total": 926.3517189025879,
+            "used": 220.54197311401367
+        }
+    },
+    "gpuapple": {
+        "type": "arm",
+        "vendor": "Apple"
+    },
+    "memory": {
+        "total": 16.0
+    }
+}

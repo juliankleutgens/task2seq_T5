@@ -10,14 +10,6 @@ import re
 from pathlib import Path
 from collections import Counter
 
-def read_solver_file():
-    # Get the current working directory
-    current_dir = Path.cwd()
-    # Construct the path to the file within the current directory
-    file_path = current_dir / 'ct_schema' / 'solvers.py'
-    with open(file_path, 'r') as file:
-        data = file.read()
-    return data
 
 
 def tokenize_expression(expression):

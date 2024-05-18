@@ -14,14 +14,6 @@ from constants import COLORMAP, NORM, TASK_DICT, Example, Task
 from numpy.typing import NDArray
 import numpy as np
 import os
-def read_solver_file():
-    # Get the current working directory
-    current_dir = Path.cwd()
-    # Construct the path to the file within the current directory
-    file_path = current_dir / 'ct_schema' / 'solvers.py'
-    with open(file_path, 'r') as file:
-        data = file.read()
-    return data
 
 
 def tokenize_expression(expression):
@@ -145,8 +137,11 @@ def get_all_dsl_tokens():
 
 def read_solver_file(path):
     # Get the current working directory
-
-    path_solver = os.getcwd() + path  + '/solvers.py'
+    if path[:7] == "/Users/" or path[:6] == "/home/":
+        path_solver = path + '/solvers.py'
+    else:
+        path_solver = os.getcwd() + path + '/solvers.py'
+    #path_solver = os.getcwd() + path  + '/solvers.py'
     with open(path_solver, 'r') as file:
         data = file.read()
     return data

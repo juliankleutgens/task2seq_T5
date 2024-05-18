@@ -1,0 +1,1 @@
+{"model_loading": "t5-small", "_timestamp": 1716035164.662608, "_runtime": 13.641247987747192, "_step": 6, "data_reading": true, "tokenized_task_sample_length": 7650, "encoded_task_sample_length": 2048, "epoch": 0, "step": 0, "loss": 11.478862762451172}

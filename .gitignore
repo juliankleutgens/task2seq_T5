@@ -13,4 +13,5 @@ outputs/model_files/model.safetensors
 .DS_Store
 .idea/
 .venv/
-wandb/
+wandbpip install fuzzywuzzy
+/

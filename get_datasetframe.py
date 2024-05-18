@@ -7,7 +7,10 @@ from constants import Task
 from utils import *
 
 def _read_generated_json_files(path: str, max_sampels:int) -> List[Task]:
-    path_json = os.getcwd() + path + '/tasks/'
+    if path[:7] == "/Users/" or path[:6] == "/home/":
+        path_json = path + '/tasks/'
+    else:
+        path_json = os.getcwd() + path + '/tasks/'
     print('we are at: ', path_json)
     files = sorted(os.listdir(path_json))
 
@@ -77,9 +80,9 @@ def load_data_with_T5_tokens(path='ct_schema', maxsamples=None, extra_token=['sy
 def load_data(path='ct_schema', maxsamples=None):
     dataset_dict = {'input': [], 'target': [], 'name': []}
     # Load the T5 tokenizer
-    try :
+    if path[-6:] == 'schema':
         tasks, solvers, file_names = _read_generated_json_files(path=path, max_sampels=maxsamples)
-    except:
+    else:
         tasks, solvers, file_names = _read_generated_json_files_saperatly(path=path, max_sampels=maxsamples)
 
 

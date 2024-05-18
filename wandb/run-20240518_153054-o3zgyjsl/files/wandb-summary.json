@@ -1,0 +1,1 @@
+{"model_loading": "t5-small", "_timestamp": 1716039084.242944, "_runtime": 30.188735961914062, "_step": 3, "data_reading": true, "epoch": 0, "step": 0, "loss": 11.294127464294434, "validation_progress": 0, "_wandb": {"runtime": 29}}
