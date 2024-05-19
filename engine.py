@@ -47,10 +47,10 @@ def train(epoch, tokenizer, model, device, loader, optimizer, training_logger, c
     model_params = cfg["model_params"]
 
     model.train()
-    training_logger = Table(title=f"Training Epoch {epoch}")  # Assuming `training_logger` is a table for logging
-    training_logger.add_column("Epoch")
-    training_logger.add_column("Step")
-    training_logger.add_column("Loss")
+    #training_logger = Table(title=f"Training Epoch {epoch}")  # Assuming `training_logger` is a table for logging
+    #training_logger.add_column("Epoch")
+    #training_logger.add_column("Step")
+    #training_logger.add_column("Loss")
 
     # Add tqdm progress bar for the training loop
     for step, data in tqdm(enumerate(loader, 0), total=len(loader), desc=f"Training Epoch {epoch}", leave=False):
@@ -69,8 +69,8 @@ def train(epoch, tokenizer, model, device, loader, optimizer, training_logger, c
         loss = outputs[0]
 
         if step % 10 == 0:
-            training_logger.add_row(str(epoch), str(step), str(loss.item()))
-            console.print(training_logger)
+            #training_logger.add_row(str(epoch), str(step), str(loss.item()))
+            #console.print(training_logger)
             wandb.log({"epoch": epoch, "step": step, "loss": loss.item()})
 
         optimizer.zero_grad()
