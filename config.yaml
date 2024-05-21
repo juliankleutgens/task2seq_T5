@@ -1,4 +1,4 @@
-max_samples: 8000
+max_samples: -1
 
 num_of_itr: 7500
 
@@ -11,9 +11,11 @@ test_paths:
   - '/home/jkleutgens/data_test/gl_schema'
   - '/home/jkleutgens/data_test/or_schema'
 
-load_new_mappings: false
+load_new_mappings: true
 
 device: 'cuda'
+
+sparse_type: 'repeated2words'
 
 output_dir: './outputs/'
 

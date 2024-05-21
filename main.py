@@ -60,6 +60,7 @@ test_paths = cfg["test_paths"]
 load_new_mappings = cfg["load_new_mappings"]
 extra_token = cfg["extra_token"]
 wandb_cfg = cfg["wandb"]
+sparse_type = cfg["sparse_type"]
 
 wandb.init(
     entity=wandb_cfg["wandb_user"],
@@ -75,7 +76,7 @@ wandb.init(
 paths = train_paths
 dfs_train_list = []
 for path in paths:
-    df = load_data(path, maxsamples=max_samples)
+    df = load_data(path, maxsamples=max_samples, sparse_type=sparse_type)
     dfs_train_list.append(df)
 
 # ------------------- get Testing data -------------------
@@ -84,7 +85,7 @@ for path in paths:
 paths_test = test_paths
 dfs_test_list = []
 for path in paths_test:
-    df = load_data(path, maxsamples=max_samples)
+    df = load_data(path, maxsamples=max_samples, sparse_type=sparse_type)
     dfs_test_list.append(df)
 
 # ------------------- get new mapping if necessary -------------------

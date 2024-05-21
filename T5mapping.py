@@ -128,20 +128,33 @@ def get_mapping(custom_tokens, T5_tokens):
 
 def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', 'var_to_num'], tokenizer=T5Tokenizer.from_pretrained('t5-small')):
     string_solver = ''
+    task_tokens = []
     for df in dfs:
         for solver, task, name in zip(df['target'], df['input'], df['name']):
             # concatenate the solver
             string_solver = string_solver + solver + '\n'
+            task_input = tokenizer(task, return_tensors='pt', padding='max_length', truncation=True, max_length=10000)
+            task_input = tokenizer.convert_ids_to_tokens(task_input['input_ids'][0])
+            task_tokens = task_tokens + task_input
     string_print, list_of_tokens = reformat_dsl_code(string_solver, extra_token=extra_token)
     all_tokens = list(tokenizer.get_vocab().keys())
+
+    # ------------------- filter the T5 tokens I don't want to be mapped to -------------------
     # I want to get rid of all the tokens with an underscore before the word/sentencepiece
     sentence_piece_char = '\u2581'
     # Filter out tokens that start with the SentencePiece character
-    filtered_tokens = [token for token in all_tokens if not token.startswith(sentence_piece_char)]
-    # all tokens from the dsl.py file + the tokens from the solver.py file
+    task_tokens_set = set(task_tokens)  # Convert to set for faster lookup
+    filtered_tokens = [
+        token for token in all_tokens
+        if not token.startswith(sentence_piece_char) and
+           token not in map(str, range(50)) and
+           token not in task_tokens_set
+    ]
+
+
+    # ------------------ make a list of all tokens I need to map to the T5 tokens -------------------
     dsl_func = get_all_dsl_tokens()
     tokenstoMap = list(set(list_of_tokens)) + dsl_func
-
     if 'sym_aft_func' in extra_token:
         tokenstoMap.append(';')
     if 'BoF' in extra_token:
@@ -149,8 +162,9 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
     if 'EoF' in extra_token:
         tokenstoMap.append('#EoF')
     tokenstoMap.append('#newline')
-    tokenstoMap = tokenstoMap + ['O', 'x', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'UNITY', 'ORIGIN', 'TWO_BY_TWO', 'NEG_ONE', 'UP', 'DOWN_LEFT', 'DOWN_RIGHT', 'DOWN', 'LEFT', 'RIGHT', 'UP_LEFT', 'UP_RIGHT', 'DOWN_LEFT_ONE', 'DOWN_RIGHT_ONE', 'DOWN_ONE', 'LEFT_ONE', 'RIGHT_ONE']
-
+    tokenstoMap = tokenstoMap + ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'UNITY', 'ORIGIN', 'TWO_BY_TWO', 'NEG_ONE', 'UP', 'DOWN_LEFT', 'DOWN_RIGHT', 'DOWN', 'LEFT', 'RIGHT', 'UP_LEFT', 'UP_RIGHT', 'DOWN_LEFT_ONE', 'DOWN_RIGHT_ONE', 'DOWN_ONE', 'LEFT_ONE', 'RIGHT_ONE']
+    # list of numbers from 0 to 99
+    tokenstoMap = tokenstoMap + [str(i) for i in range(10)]
     tokenstoMap = list(set(tokenstoMap))
     print('There are ', len(tokenstoMap), ' tokens to map')
     # all_tokens_minus_used_solver = list(set(all_tokens) - set(string_tokens_to_t5))

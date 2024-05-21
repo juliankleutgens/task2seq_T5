@@ -5,6 +5,7 @@ import os
 from typing import List
 from constants import Task
 from utils import *
+import inflect
 
 def _read_generated_json_files(path: str, max_sampels:int) -> List[Task]:
     if path[:7] == "/Users/" or path[:6] == "/home/":
@@ -68,7 +69,6 @@ def load_data_with_T5_tokens(path='ct_schema', maxsamples=None, extra_token=['sy
         trimmed_func = solver
         T5_tokens_list, _ = map_to_t5_token(solver, extra_token=extra_token, tokenizer=tokenizer,
                                                              loading_new_mappings=False)
-
         for i in task:
             task_desc = convert2sparse(i)
             dataset_dict['input'].append(task_desc)
@@ -77,7 +77,22 @@ def load_data_with_T5_tokens(path='ct_schema', maxsamples=None, extra_token=['sy
 
     return dataset_dict
 
-def load_data(path='ct_schema', maxsamples=None):
+def convert_task(task, sparse_type='repeated2words'):
+    task_all_pairs = ''
+    for i in task:
+        task_all_pairs += ' new pair'
+        if sparse_type == 'codeit':
+            task_desc = convert2sparse(i)
+        elif sparse_type == 'repeated2words':
+            task_desc = convert2sparse_repeated_numbers(i)
+        else:
+            print('decode the task with given sparse type not found in configuration file.')
+            print('Please check the configuration file, for now using: repeated2words.')
+            task_desc = convert2sparse_repeated_numbers(i)
+        task_all_pairs += task_desc
+    return task_all_pairs
+
+def load_data(path='ct_schema', maxsamples=None, sparse_type='repeated2words'):
     dataset_dict = {'input': [], 'target': [], 'name': []}
     # Load the T5 tokenizer
     if path[-6:] == 'schema':
@@ -87,12 +102,9 @@ def load_data(path='ct_schema', maxsamples=None):
 
 
     counter = 0
-    for task, solver, name in zip(tasks, solvers, file_names):
+    for task, solver, name in tqdm(zip(tasks, solvers, file_names), desc="Pre Preprocessing step", leave=False):
         trimmed_func = solver
-        task_all_pairs = ''
-        for i in task:
-            task_desc = convert2sparse(i)
-            task_all_pairs += task_desc + '\n'
+        task_all_pairs = convert_task(task, sparse_type=sparse_type)
         dataset_dict['input'].append(task_all_pairs)
         dataset_dict['target'].append(trimmed_func)
         dataset_dict['name'].append(name)

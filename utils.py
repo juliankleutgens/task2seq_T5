@@ -223,9 +223,42 @@ def count_parameters(model):
 
 import json
 from pathlib import Path
+import inflect
 
+def number_to_words(number):
+    p = inflect.engine()
+    return p.number_to_words(number)
+def number_to_words_one_till_ten(number):
+    dic = {0: 'zero', 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten'}
+    return dic[number]
 
+def convert2sparse_repeated_numbers(task):
+    def fromArray2(narray):
+        # Get the dimensions of the narray
+        dim_ = narray.shape
+        # Create a flattened string representation of the narray with color indexes
+        flatgrid_str = f"{dim_[0]}x{dim_[1]}:  "
+        flatgrid_str = ''
+        for row_ in narray:
+            idx = 0
+            while idx < len(row_):
+                count = 0
+                while idx + count < len(row_) and row_[idx] == row_[idx + count]:
+                    count += 1
+                if count >= 5:
+                    flatgrid_str += ' ' + str(number_to_words_one_till_ten(row_[idx])) + 'x' + str(count)
+                else:
+                    for num in row_[idx:idx + count]:
+                        word = number_to_words_one_till_ten(num)
+                        flatgrid_str += ' ' + word
+                idx += count
+            flatgrid_str += ';'
+        return flatgrid_str
 
+    input_ = task[0]
+    output_ = task[1]
+    sparse_task = fromArray2(input_) + '|' + fromArray2(output_)
+    return sparse_task
 
 
 
