@@ -68,6 +68,12 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     # logger = logging.getLogger(__name__)
 
     output_dir = cfg["output_dir"]
+    import torch
+    print(f"the line torch.cuda.is_available() is {torch.cuda.is_available()}")
+    print(torch.cuda.is_available())
+    print(torch.cuda.device_count())
+    print(torch.cuda.get_device_name(0))
+
 
     # ------------------- load device -------------------
     model_params = cfg["model_params"]

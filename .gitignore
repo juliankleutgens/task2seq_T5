@@ -17,3 +17,4 @@ wandb/
 outputsgpuserver/
 outputsgpuserver/*
 print_csv.py
+wandb/latest-run/
