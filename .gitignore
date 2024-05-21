@@ -14,3 +14,6 @@ outputs/model_files/model.safetensors
 .idea/
 .venv/
 wandb/
+outputsgpuserver/
+outputsgpuserver/*
+print_csv.py

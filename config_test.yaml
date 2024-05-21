@@ -1,19 +1,19 @@
-max_samples: -1
+max_samples: 2
 
-num_of_itr: 7500
+num_of_itr: 1
 
 train_paths:
-  - '/home/jkleutgens/training_data'
+  - '/Users/juliankleutgens/training_data'
 
 
 test_paths:
-  - '/home/jkleutgens/data_test/ct_schema'
-  - '/home/jkleutgens/data_test/gl_schema'
-  - '/home/jkleutgens/data_test/or_schema'
+  - '/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/ct_schema'
+  - '/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/gl_schema'
+  - '/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/or_schema'
 
 load_new_mappings: false
 
-device: 'cuda'
+device: 'cpu'
 
 output_dir: './outputs/'
 
@@ -25,9 +25,9 @@ extra_token:
 
 model_params:
   MODEL: "t5-small"
-  TRAIN_BATCH_SIZE: 8
-  VALID_BATCH_SIZE: 8
-  TRAIN_EPOCHS: 10
+  TRAIN_BATCH_SIZE: 2
+  VALID_BATCH_SIZE: 1
+  TRAIN_EPOCHS: 1
   VAL_EPOCHS: 1
   LEARNING_RATE: 1.0e-4
   MAX_SOURCE_TEXT_LENGTH: 2048

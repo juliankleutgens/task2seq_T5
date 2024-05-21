@@ -10,6 +10,8 @@ import torchsummary
 import numpy as np
 import pandas as pd
 import torch
+import shutil
+import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
 import os
@@ -17,6 +19,7 @@ from get_datasetframe import *
 # Importing the T5 modules from huggingface/transformers
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 
+from datetime import datetime
 from rich.table import Column, Table
 from rich import box
 from rich.console import Console
@@ -63,8 +66,14 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     # Setup logging
     # logging.basicConfig(level=logging.INFO)
     # logger = logging.getLogger(__name__)
-    # Log the model loading
-    output_dir = cfg["output_dir"]
+
+
+    print(f"New output directory created at: {new_output_dir}")
+    print(f"Copied dsl_token_mappings_T5.json and config.yaml to: {output_dir}")
+
+
+
+    # ------------------- load device -------------------
     model_params = cfg["model_params"]
     if cfg["device"] == "cuda":
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -74,10 +83,18 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
         device = torch.device("mps")
     else:
         raise ValueError("Invalid device. Choose from 'cuda', 'cpu', 'mps'")
+    print(f"------- Using device {device} -------")
+    if torch.cuda.is_available():
+        device = torch.device('cuda')
+        print(f"Using GPU: {torch.cuda.get_device_name(device)}")
+        print(f"Memory Allocated: {torch.cuda.memory_allocated(device) / (1024 ** 2):.2f} MB")
+        print(f"Memory Cached: {torch.cuda.memory_reserved(device) / (1024 ** 2):.2f} MB")
 
     # logging
     console.log(f"""[Model]: Loading {model_params["MODEL"]}...\n""")
     wandb.log({"model_loading": model_params["MODEL"]})
+    print(f"Loading {model_params['MODEL']}...")
+
 
     # tokenzier for encoding the text
     tokenizer = T5Tokenizer.from_pretrained(model_params["MODEL"])
@@ -136,7 +153,7 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     # ------------------- Training and Validation Loop -------------------
     for epoch in range(model_params["TRAIN_EPOCHS"]):
         train(epoch, tokenizer=tokenizer, model=model, device=device, loader=training_loader, optimizer=optimizer,
-              training_logger=training_logger, console=console, cfg=cfg, val_loader_list=val_loader_list)
+            console=console, cfg=cfg, val_loader_list=val_loader_list)
 
 
     console.save_text(os.path.join(output_dir, 'logs.txt'))

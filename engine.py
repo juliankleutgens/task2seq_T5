@@ -36,7 +36,7 @@ import wandb
 from dataloader import DataSetClass
 
 
-def train(epoch, tokenizer, model, device, loader, optimizer, training_logger, console=Console(), cfg=None,
+def train(epoch, tokenizer, model, device, loader, optimizer, console=Console(), cfg=None,
           val_loader_list=None):
     """
     Function to be called for training with the parameters passed from main function
@@ -47,10 +47,8 @@ def train(epoch, tokenizer, model, device, loader, optimizer, training_logger, c
     model_params = cfg["model_params"]
 
     model.train()
-    #training_logger = Table(title=f"Training Epoch {epoch}")  # Assuming `training_logger` is a table for logging
-    #training_logger.add_column("Epoch")
-    #training_logger.add_column("Step")
-    #training_logger.add_column("Loss")
+    print(f"The model is on the device: {next(model.parameters()).device}")
+
 
     # Add tqdm progress bar for the training loop
     for step, data in tqdm(enumerate(loader, 0), total=len(loader), desc=f"Training Epoch {epoch}", leave=False):
@@ -87,7 +85,6 @@ def train(epoch, tokenizer, model, device, loader, optimizer, training_logger, c
     # evaluating test dataset
     console.log(f"[Initiating Validation]...\n")
 
-    first_iteration = True
     # Initialize accumulators for scores
     total_bleu_score = 0
     total_rouge_1_f = 0
@@ -95,15 +92,15 @@ def train(epoch, tokenizer, model, device, loader, optimizer, training_logger, c
     total_rouge_l_f = 0
     num_datasets = len(val_loader_list)
     for i, val_loader in enumerate(val_loader_list):
+        test_set = test_paths[i][test_paths[i].rfind('/'):]
         console.print(f"Validation for dataset {test_paths[i]}")
-        predictions, actuals, avg_bleu_score, avg_rouge_score = validate(epoch=epoch, tokenizer=tokenizer, model=model, device=device,
+        predictions, actuals, avg_bleu_score, avg_rouge_score, bleu_scores = validate(epoch=epoch, tokenizer=tokenizer, model=model, device=device,
                                         loader=val_loader,
                                         model_params=model_params, num_batches=cfg["model_params"]["VALID_BATCH_SIZE"])
-        final_df = pd.DataFrame({'Generated Text': predictions, 'Actual Text': actuals})
-        # print(final_df)
-        if first_iteration:
+        final_df = pd.DataFrame({'Epoch':epoch,'Testset': test_set,'Average Blue Score':bleu_scores,'Generated Text': predictions, 'Actual Text': actuals})
+
+        if epoch == 0 and i == 0:
             final_df.to_csv(os.path.join(output_dir, 'predictions.csv'), mode='w', header=True, index=False)
-            first_iteration = False
         else:
             final_df.to_csv(os.path.join(output_dir, 'predictions.csv'), mode='a', header=False, index=False)
         # Accumulate scores
@@ -200,4 +197,4 @@ def validate(epoch, tokenizer, model, device, loader, model_params, num_batches)
             "rouge-l": sum([s["rouge-l"]["f"] for s in rouge_scores]) / len(rouge_scores),
         }
 
-    return predictions, actuals, avg_bleu_score, avg_rouge_score
+    return predictions, actuals, avg_bleu_score, avg_rouge_score, bleu_scores
