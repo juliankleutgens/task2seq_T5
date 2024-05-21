@@ -1,3 +1,9 @@
+import torch
+print(torch.cuda.is_available())  # Should print: True
+print(torch.cuda.device_count())  # Should print: Number of available GPUs
+print(torch.cuda.get_device_name(0))  # Should print: Name of the first GPU
+
+"""
 import pandas as pd
 import os
 
@@ -15,3 +21,4 @@ for index, row in data.iterrows():
     print(f"Generated Tokens: {row['Generated Text']}")
     print(f"Actual Text: {row['Actual Text']}")
     print()  # Add a blank line for better readability
+"""
