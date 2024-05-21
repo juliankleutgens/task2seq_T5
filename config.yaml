@@ -1,4 +1,4 @@
-max_samples: -1
+max_samples: 8000
 
 num_of_itr: 7500
 

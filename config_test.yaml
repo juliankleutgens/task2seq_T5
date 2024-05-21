@@ -13,7 +13,7 @@ test_paths:
 
 load_new_mappings: false
 
-device: 'cpu'
+device: 'cuda'
 
 output_dir: './outputs/'
 

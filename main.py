@@ -41,7 +41,7 @@ from trainer import  display_df, T5Trainer
 import yaml
 
 # ------------------- load config -------------------
-test_mode = False # set to True if you want to test the code on your local computer
+test_mode = True # set to True if you want to test the code on your local computer
 # Load the configuration from the YAML file
 if test_mode:
     with open("config_test.yaml", "r") as file:

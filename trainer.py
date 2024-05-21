@@ -67,7 +67,7 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     # logging.basicConfig(level=logging.INFO)
     # logger = logging.getLogger(__name__)
 
-
+    output_dir = cfg["output_dir"]
 
     # ------------------- load device -------------------
     model_params = cfg["model_params"]
@@ -76,7 +76,7 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
         if device.type == "cuda":
             print(f"Using {torch.cuda.get_device_name(0)}")
         else:
-            print(f"Using CPU for training")
+            print(f"tried to use a GPU but it is not available: Using CPU for training")
     elif cfg["device"] == "cpu":
         device = torch.device("cpu")
         print("Using CPU for model parallelism")
