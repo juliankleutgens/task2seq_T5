@@ -73,18 +73,25 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     model_params = cfg["model_params"]
     if cfg["device"] == "cuda":
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if device.type == "cuda":
+            print(f"Using {torch.cuda.get_device_name(0)}")
+        else:
+            print(f"Using CPU for training")
     elif cfg["device"] == "cpu":
         device = torch.device("cpu")
+        print("Using CPU for model parallelism")
     elif cfg["device"] == "mps":
         device = torch.device("mps")
+        print("Using Multi-Process Service (MPS) for model parallelism")
     else:
         raise ValueError("Invalid device. Choose from 'cuda', 'cpu', 'mps'")
     print(f"------- Using device {device} -------")
     if torch.cuda.is_available():
-        device = torch.device('cuda')
         print(f"Using GPU: {torch.cuda.get_device_name(device)}")
         print(f"Memory Allocated: {torch.cuda.memory_allocated(device) / (1024 ** 2):.2f} MB")
         print(f"Memory Cached: {torch.cuda.memory_reserved(device) / (1024 ** 2):.2f} MB")
+    else:
+        print(f"Using CPU, CUDA is not available")
 
     # logging
     console.log(f"""[Model]: Loading {model_params["MODEL"]}...\n""")
