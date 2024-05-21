@@ -68,10 +68,6 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     # logger = logging.getLogger(__name__)
 
 
-    print(f"New output directory created at: {new_output_dir}")
-    print(f"Copied dsl_token_mappings_T5.json and config.yaml to: {output_dir}")
-
-
 
     # ------------------- load device -------------------
     model_params = cfg["model_params"]

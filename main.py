@@ -6,7 +6,7 @@ Date: June 2023
 """
 import shutil
 import pandas as pd
-
+from datetime import datetime
 # Importing libraries
 import os
 from omegaconf import OmegaConf
@@ -123,6 +123,8 @@ training_logger = Table(Column("Epoch", justify="center"),
 # ---- init console ----
 # define a rich console logger
 console = Console(record=True)
+
+
 # ---------------- Log the model loading ----------------
 current_time = datetime.now().strftime("%Y%m%d_%H%M")  # Generate the current timestamp
 base_output_dir = cfg["output_dir"]
@@ -135,7 +137,11 @@ shutil.copy("dsl_token_mappings_T5.json", output_dir)
 # use cfg to save the config.yaml file
 with open(os.path.join(output_dir, "config_used.yaml"), "w") as file:
     OmegaConf.save(cfg, file)
+print(f"New output directory created at: {new_output_dir}")
+print(f"Copied dsl_token_mappings_T5.json and config.yaml to: {output_dir}")
 
+
+# ------------------- Start Training -------------------
 T5Trainer(cfg=cfg, dataframe_train=dfs_train, dataframe_test_list=dfs_test_list, console=console,
           training_logger=training_logger)
 # can I save the output folder to weights and biases?
