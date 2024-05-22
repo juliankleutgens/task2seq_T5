@@ -94,7 +94,7 @@ def train(epoch, tokenizer, model, device, loader, optimizer, console=Console(),
     for i, val_loader in enumerate(val_loader_list):
         test_set = test_paths[i][test_paths[i].rfind('/'):]
         console.print(f"Validation for dataset {test_paths[i]}")
-        predictions, actuals, avg_bleu_score, avg_rouge_score, bleu_scores = validate(epoch=epoch, tokenizer=tokenizer, model=model, device=device,
+        predictions, actuals, avg_bleu_score, bleu_scores = validate(epoch=epoch, tokenizer=tokenizer, model=model, device=device,
                                         loader=val_loader,
                                         model_params=model_params, num_batches=cfg["model_params"]["VALID_BATCH_SIZE"])
         final_df = pd.DataFrame({'Epoch':epoch,'Testset': test_set,'Average Blue Score':bleu_scores,'Generated Text': predictions, 'Actual Text': actuals})
@@ -105,27 +105,15 @@ def train(epoch, tokenizer, model, device, loader, optimizer, console=Console(),
             final_df.to_csv(os.path.join(output_dir, 'predictions.csv'), mode='a', header=False, index=False)
         # Accumulate scores
         total_bleu_score += avg_bleu_score
-        total_rouge_1_f += avg_rouge_score["rouge-1"]
-        total_rouge_2_f += avg_rouge_score["rouge-2"]
-        total_rouge_l_f += avg_rouge_score["rouge-l"]
-
     # Calculate average scores across all datasets
     avg_bleu_score_overall = total_bleu_score / num_datasets
-    avg_rouge_1_f_overall = total_rouge_1_f / num_datasets
-    avg_rouge_2_f_overall = total_rouge_2_f / num_datasets
-    avg_rouge_l_f_overall = total_rouge_l_f / num_datasets
 
     # Log the overall average metrics to wandb
     wandb.log({
         "avg_bleu_score": avg_bleu_score_overall,
-        "rouge-1_f": avg_rouge_1_f_overall,
-        "rouge-2_f": avg_rouge_2_f_overall,
-        "rouge-l_f": avg_rouge_l_f_overall,
     })
     print(f"avg_bleu_score: {avg_bleu_score_overall}")
-    print(f"rouge-1_f: {avg_rouge_1_f_overall}")
-    print(f"rouge-2_f: {avg_rouge_2_f_overall}")
-    print(f"rouge-l_f: {avg_rouge_l_f_overall}")
+
 
 def validate(epoch, tokenizer, model, device, loader, model_params, num_batches):
     """
@@ -135,8 +123,6 @@ def validate(epoch, tokenizer, model, device, loader, model_params, num_batches)
     predictions = []
     actuals = []
     bleu_scores = []
-    rouge = Rouge()
-    rouge_scores = []
     iteration = 0
 
     with torch.no_grad():
@@ -185,16 +171,9 @@ def validate(epoch, tokenizer, model, device, loader, model_params, num_batches)
                 score = sentence_bleu([act], pred, smoothing_function=SmoothingFunction().method1)
                 bleu_scores.append(score)
 
-            # Calculate ROUGE scores
-            for pred, act in zip(preds, target):
-                rouge_score = rouge.get_scores(' '.join(pred), ' '.join(act))
-                rouge_scores.append(rouge_score[0])
+
 
         avg_bleu_score = sum(bleu_scores) / len(bleu_scores)
-        avg_rouge_score = {
-            "rouge-1": sum([s["rouge-1"]["f"] for s in rouge_scores]) / len(rouge_scores),
-            "rouge-2": sum([s["rouge-2"]["f"] for s in rouge_scores]) / len(rouge_scores),
-            "rouge-l": sum([s["rouge-l"]["f"] for s in rouge_scores]) / len(rouge_scores),
-        }
 
-    return predictions, actuals, avg_bleu_score, avg_rouge_score, bleu_scores
+
+    return predictions, actuals, avg_bleu_score, bleu_scores

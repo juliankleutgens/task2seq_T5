@@ -15,7 +15,8 @@ from numpy.typing import NDArray
 import numpy as np
 import os
 import dsl
-
+from tqdm import tqdm
+from transformers import T5Tokenizer
 
 def tokenize_expression(expression):
     """Helper function to tokenize all variable references in an expression."""
@@ -165,7 +166,22 @@ def decode_json_task(file_path: str) -> Task:
         task.append(example)
 
     return task
+def decode_json_task_test(file_path: str) -> Task:
+    with open(file_path) as f:
+        data = json.load(f)
 
+    examples = data["train"] + data["test"]
+
+    task: Task = []
+    for example in examples:
+        input = example["input"]
+        example = Example(
+            input=np.array(input, dtype=np.uint8),
+            output=np.array(input, dtype=np.uint8),
+        )
+        task.append(example)
+
+    return task
 
 def normalize_task(
         task: Task, h: int = 30, w: int = 30, max_input_output_pairs: int = 4
@@ -330,7 +346,6 @@ def convert2grid(sparse_task):
     output_ = fromSparse(task_[1])
     task_dict = {'input': input_, 'output': output_}
     return task_dict
-
 
 
 if __name__ == "__main__":

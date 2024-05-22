@@ -6,6 +6,49 @@ from typing import List
 from constants import Task
 from utils import *
 import inflect
+def _read_arc_json_files(path: str, max_sampels: int) -> List[Task]:
+    """
+    Given a directory path returns a list of arc
+    Tasks.
+    """
+    if path[:7] == "/Users/" or path[:6] == "/home/":
+        path_json = path
+    else:
+        path_json = os.getcwd() + path
+    print('we are at: ', path_json)
+    files = sorted(os.listdir(path_json))
+    tasks: List[Task] = []
+    solvers = []
+    #  read the solver.py file in a string
+    if not path[-5] == '/test':
+        idx = path.find('abstraction-and-reasoning-challenge')
+        solvers_file = read_solver_file(path[:idx])
+
+    file_names = []
+    i = 0
+    for file in tqdm(files, desc="Decoding json files", leave=False):
+        if i == max_sampels:
+            break
+        try:
+            if not path[-5:] == '/test':
+                task = decode_json_task(os.path.join(path_json, file))
+                function = 'def solve_' + file[:-5] + '('
+                idx_start = solvers_file.find(function)
+                idx_end = solvers_file.find('def solve_', idx_start + 1)
+                solver = solvers_file[idx_start:idx_end]
+            else:
+                task = decode_json_task_test(os.path.join(path_json, file))
+                solver = ''
+
+        except Exception as e:
+            print(e)
+        else:
+            tasks.append(task)
+            solvers.append(solver)
+            file_names.append(file[:-5])
+        i += 1
+
+    return tasks, solvers, file_names
 
 def _read_generated_json_files(path: str, max_sampels:int) -> List[Task]:
     if path[:7] == "/Users/" or path[:6] == "/home/":
@@ -41,6 +84,8 @@ def _read_generated_json_files(path: str, max_sampels:int) -> List[Task]:
 
     return tasks, solvers, file_names
 
+
+
 def convert2grid(sparse_task):
     def fromSparse(sparse):
         sparse = sparse.split('=')
@@ -56,6 +101,8 @@ def convert2grid(sparse_task):
     output_ = fromSparse(task_[1])
     task_dict = {'input': input_, 'output': output_}
     return task_dict
+
+
 
 def load_data_with_T5_tokens(path='ct_schema', maxsamples=None, extra_token=['sym_aft_func', 'BoF', 'EoF', 'var_to_num'],
               tokenizer = T5Tokenizer.from_pretrained('t5-small')):
@@ -80,10 +127,11 @@ def load_data_with_T5_tokens(path='ct_schema', maxsamples=None, extra_token=['sy
 def convert_task(task, sparse_type='repeated2words'):
     task_all_pairs = ''
     for i in task:
-        task_all_pairs += ' new pair'
         if sparse_type == 'codeit':
+            task_all_pairs += ' new pair'
             task_desc = convert2sparse(i)
         elif sparse_type == 'repeated2words':
+            task_all_pairs += ' new pair'
             task_desc = convert2sparse_repeated_numbers(i)
         else:
             print('decode the task with given sparse type not found in configuration file.')
@@ -92,13 +140,16 @@ def convert_task(task, sparse_type='repeated2words'):
         task_all_pairs += task_desc
     return task_all_pairs
 
-def load_data(path='ct_schema', maxsamples=None, sparse_type='repeated2words'):
+def load_data(path='ct_schema', maxsamples=-1, sparse_type='repeated2words'):
     dataset_dict = {'input': [], 'target': [], 'name': []}
     # Load the T5 tokenizer
-    if path[-6:] == 'schema':
-        tasks, solvers, file_names = _read_generated_json_files(path=path, max_sampels=maxsamples)
-    else:
+    if path.find('training_data') != -1:
         tasks, solvers, file_names = _read_generated_json_files_saperatly(path=path, max_sampels=maxsamples)
+    elif path.find('abstraction-and-reasoning-challenge') != -1:
+        tasks, solvers, file_names = _read_arc_json_files(path=path, max_sampels=maxsamples)
+    else:
+        tasks, solvers, file_names = _read_generated_json_files(path=path, max_sampels=maxsamples)
+
     print(f"Read the data successfully from {path}")
     print(f"Number of tasks: {len(tasks)}")
     print("Continue with the preprocessing step")

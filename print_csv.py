@@ -27,18 +27,24 @@ from get_datasetframe import *
 from transformers import T5Tokenizer
 import matplotlib.pyplot as plt
 
-max_samples = -1
-sparse_types = ['repeated2words']
-path = '/Users/juliankleutgens/training_data'
+max_samples = 1
+sparse_types = ['patches']
+paths = ['/Users/juliankleutgens/PycharmProjects/arc-dsl-main/abstraction-and-reasoning-challenge/training',
+        '/Users/juliankleutgens/PycharmProjects/arc-dsl-main/abstraction-and-reasoning-challenge/evaluation']
+paths = ['/Users/juliankleutgens/PycharmProjects/arc-dsl-main/abstraction-and-reasoning-challenge/training']
+paths = ['/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/ct_schema']
 dfs = {}
-for sparse_type in sparse_types:
-    df = load_data(path, maxsamples=max_samples, sparse_type=sparse_type)
-    dfs[sparse_type] = df
+for path in paths:
+    for sparse_type in sparse_types:
+        df = load_data(path, maxsamples=max_samples, sparse_type=sparse_type)
+        name = path[-10:]+ '_' +sparse_type
+        dfs[name] = df
 
 
 
 # tokenized all the data with the T5 tokenizer
 tokenizer = T5Tokenizer.from_pretrained('t5-small')
+j = 0
 for type, df in dfs.items():
     len_tasks = []
     for i in range(len(df['input'])):
@@ -50,19 +56,23 @@ for type, df in dfs.items():
     print(f'Average length of tasks for {type}: {sum(len_tasks) / len(len_tasks)}')
     # plot the distribution of the lengths
     plt.hist(len_tasks, bins=50)
-    plt.title(f'Distribution of task lengths for {type}')
+    plt.title(f'Distribution of task lengths for {type} for datas set {paths[j][-10:]}')
     plt.xlabel('Task length')
     plt.ylabel('Number of tasks')
     plt.show()
+    j += 1
 
 all_tokens = []
+
+"""
 # print the list of tokens for one example
-for i in range(len(df['input'])):
-    x = tokenizer(dfs['repeated2words']['input'][i])
-    x = x['input_ids']
-    # I want to see it as a list
-    tokens = tokenizer.convert_ids_to_tokens(x)
-    all_tokens += tokens
+for df in dfs.values():
+    for i in range(len(df['input'])):
+        x = tokenizer(dfs['repeated2words']['input'][i])
+        x = x['input_ids']
+        # I want to see it as a list
+        tokens = tokenizer.convert_ids_to_tokens(x)
+        all_tokens += tokens
 print(set(all_tokens))
 tokens_from_task_encoder = get_tokens_from_task_encoder()
 # check if all tokens are in the task encoder
@@ -73,3 +83,4 @@ for token in set(all_tokens):
 #print('Example of tokens for the first task:')
 #print('Input:', tokenizer.decode(x))
 #print()
+"""
