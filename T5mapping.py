@@ -5,7 +5,9 @@ from transformers import T5ForConditionalGeneration, T5Tokenizer
 from transformers import T5Tokenizer
 import json
 from fuzzywuzzy import process
+import time
 import numpy as np
+from utils import *
 
 def map_to_t5_token(string_solver,extra_token = ['sym_aft_func', 'BoF', 'EoF'], tokenizer=T5Tokenizer.from_pretrained('t5-small'), loading_new_mappings = True):
     string_print, list_of_tokens = reformat_dsl_code(string_solver, extra_token=extra_token)
@@ -68,6 +70,8 @@ def map_list(list_of_tokens, dsl_token_mappings):
         else:
             raise ValueError(f"Input list contains a token that is not in the mapping: {token}, set loading_new_mappings to True to generate a new mapping.")
     return T5_tokens_list
+
+
 def save_token_mappings(token_mappings, filename="dsl_token_mappings_T5.json"):
     """Saves token mappings to a JSON file, handling potential overwrite."""
     # Save mappings only if they've changed or the file doesn't exist
@@ -132,15 +136,27 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
     task_tokens = []
     print('Computing a new mappings')
     print('First, concatenate all the solvers and tokenize them')
+    # Initialize the total time counters
+    # Calculate the total number of tasks to be processed
+    total_tasks = sum(len(df) for df in dfs)
 
-    for df in tqdm(dfs, desc="DataFrames"):
-        for solver, task, name in tqdm(zip(df['target'], df['input'], df['name']), desc="Tasks", leave=False):
-            # concatenate the solver
-            string_solver = string_solver + solver + '\n'
-            task_input = tokenizer(task, return_tensors='pt', padding='max_length', truncation=True, max_length=100)
-            task_input = tokenizer.convert_ids_to_tokens(task_input['input_ids'][0])
-            task_tokens = task_tokens + task_input
+    # Initialize the progress bar
+    with tqdm(total=total_tasks, desc="Processing tasks") as pbar:
+        for df in dfs:
+            for solver, task, name in zip(df['target'], df['input'], df['name']):
+                string_solver = string_solver + solver + '\n'
+                #task_input = tokenizer(task, return_tensors='pt', padding='max_length', truncation=True, max_length=100)
+                #task_input = tokenizer.convert_ids_to_tokens(task_input['input_ids'][0])
+                #task_tokens = task_tokens + task_input
+                # Update the progress bar
+                pbar.update(1)
+
+    tokens_from_task_encoder = get_tokens_from_task_encoder()
+    task_tokens = tokens_from_task_encoder
+    start_time = time.time()
     string_print, list_of_tokens = reformat_dsl_code(string_solver, extra_token=extra_token)
+    time_to_reformat = time.time() - start_time
+    print('Time to reformat the DSL code: ', time_to_reformat)
     all_tokens = list(tokenizer.get_vocab().keys())
 
     # ------------------- filter the T5 tokens I don't want to be mapped to -------------------
@@ -160,7 +176,8 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
 
     # ------------------ make a list of all tokens I need to map to the T5 tokens -------------------
     dsl_func = get_all_dsl_tokens()
-    tokenstoMap = list(set(list_of_tokens)) + dsl_func
+    dsl_constants = get_all_dsl_constants()
+    tokenstoMap = list(set(list_of_tokens)) + dsl_func + dsl_constants
     if 'sym_aft_func' in extra_token:
         tokenstoMap.append(';')
     if 'BoF' in extra_token:
@@ -168,8 +185,6 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
     if 'EoF' in extra_token:
         tokenstoMap.append('#EoF')
     tokenstoMap.append('#newline')
-    tokenstoMap = tokenstoMap + ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'UNITY', 'ORIGIN', 'TWO_BY_TWO', 'NEG_ONE', 'UP', 'DOWN_LEFT', 'DOWN_RIGHT', 'DOWN', 'LEFT', 'RIGHT', 'UP_LEFT', 'UP_RIGHT', 'DOWN_LEFT_ONE', 'DOWN_RIGHT_ONE', 'DOWN_ONE', 'LEFT_ONE', 'RIGHT_ONE']
-    # list of numbers from 0 to 99
     tokenstoMap = tokenstoMap + [str(i) for i in range(10)]
     tokenstoMap = list(set(tokenstoMap))
     print('There are ', len(tokenstoMap), ' tokens to map')
@@ -316,7 +331,6 @@ def reconstruct_code(token_list, name_idx='005t822n'):
 
     # Return a single string that concatenates all function definitions
     return ''.join(output)
-
 
 
 

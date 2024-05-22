@@ -27,7 +27,7 @@ from get_datasetframe import *
 from transformers import T5Tokenizer
 import matplotlib.pyplot as plt
 
-max_samples = 10000
+max_samples = -1
 sparse_types = ['repeated2words']
 path = '/Users/juliankleutgens/training_data'
 dfs = {}
@@ -55,13 +55,20 @@ for type, df in dfs.items():
     plt.ylabel('Number of tasks')
     plt.show()
 
-
+all_tokens = []
 # print the list of tokens for one example
-x = tokenizer(dfs['repeated2words']['input'][0])
-x = x['input_ids']
-# I want to see it as a list
-tokens = tokenizer.convert_ids_to_tokens(x)
-#print(tokens)
+for i in range(len(df['input'])):
+    x = tokenizer(dfs['repeated2words']['input'][i])
+    x = x['input_ids']
+    # I want to see it as a list
+    tokens = tokenizer.convert_ids_to_tokens(x)
+    all_tokens += tokens
+print(set(all_tokens))
+tokens_from_task_encoder = get_tokens_from_task_encoder()
+# check if all tokens are in the task encoder
+for token in set(all_tokens):
+    if token not in set(tokens_from_task_encoder):
+        print(f'Token {token} not in task encoder')
 
 #print('Example of tokens for the first task:')
 #print('Input:', tokenizer.decode(x))

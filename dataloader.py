@@ -58,7 +58,8 @@ class DataSetClass(Dataset):
         # so convert it to embedding and tensor
         target_token,_ = map_to_t5_token(target_string,extra_token=self.extra_token, tokenizer=self.tokenizer, loading_new_mappings=False)
         target_token_ids = self.tokenizer.convert_tokens_to_ids(target_token)
-        #print(f"The length of the tokenized solver.py functions sample is: {len(target_token_ids)}")
+
+        # print(f"The length of the tokenized solver.py functions sample is: {len(target_token_ids)}")
         # Prepare target tokens tensor
         target_ids = torch.tensor(target_token_ids, dtype=torch.long)
 
@@ -69,7 +70,7 @@ class DataSetClass(Dataset):
         if len(target_ids) > self.target_len:
             l = len(target_ids)
             target_ids = target_ids[:self.target_len]
-            print(f"Target Length Exceeded for {self.name[index]} with length {l} is longer than {self.target_len}")
+            print(f"Target Length Exceeded for {self.name[index]} with length {l} is longer than {self.target_len}, gets truncated.")
         # Create attention masks for target
         target_mask = torch.where(target_ids == self.tokenizer.pad_token_id, 0, 1)
 

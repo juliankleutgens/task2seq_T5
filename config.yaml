@@ -1,6 +1,6 @@
-max_samples: 20000
+max_samples: -1
 
-num_of_itr: 7500
+num_of_itr: 10000
 
 train_paths:
   - '/home/jkleutgens/training_data'
@@ -12,7 +12,7 @@ test_paths:
   - '/home/jkleutgens/data_test/gl_schema'
   - '/home/jkleutgens/data_test/or_schema'
 
-load_new_mappings: true
+load_new_mappings: false
 
 device: 'cuda'
 
@@ -34,7 +34,7 @@ model_params:
   VAL_EPOCHS: 1
   LEARNING_RATE: 1.0e-4
   MAX_SOURCE_TEXT_LENGTH: 1024
-  MAX_TARGET_TEXT_LENGTH: 256
+  MAX_TARGET_TEXT_LENGTH: 512
   SEED: 42
 
 wandb:

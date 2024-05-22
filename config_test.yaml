@@ -1,4 +1,4 @@
-max_samples: 20
+max_samples: 100
 
 num_of_itr: 1
 
@@ -33,7 +33,7 @@ model_params:
   VAL_EPOCHS: 1
   LEARNING_RATE: 1.0e-4
   MAX_SOURCE_TEXT_LENGTH: 2048
-  MAX_TARGET_TEXT_LENGTH: 256
+  MAX_TARGET_TEXT_LENGTH: 512
   SEED: 42
 
 wandb:

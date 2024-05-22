@@ -129,6 +129,17 @@ def get_all_dsl_tokens():
     # Extract the function names
     dsl_tokens = [func[0] for func in dsl_functions]
     return dsl_tokens
+def get_all_dsl_constants():
+    # those can be found in https://github.com/michaelhodel/arc-dsl/blob/main/constants.py
+    dsl_constants = [
+    "F", "T",  # Boolean values
+    "ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE", "TEN",  # Numeric values
+    "NEG_ONE", "NEG_TWO",  # Negative numeric values
+    "DOWN", "RIGHT", "UP", "LEFT",  # Directions
+    "ORIGIN", "UNITY", "NEG_UNITY", "UP_RIGHT", "DOWN_LEFT",  # Points and directions
+    "ZERO_BY_TWO", "TWO_BY_ZERO", "TWO_BY_TWO", "THREE_BY_THREE"  # Specific coordinates
+    ]
+    return dsl_constants
 
 def embedding_one_hot(tokens):
     # Get all unique tokens

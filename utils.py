@@ -14,6 +14,7 @@ from constants import COLORMAP, NORM, TASK_DICT, Example, Task
 from numpy.typing import NDArray
 import numpy as np
 import os
+import dsl
 
 
 def tokenize_expression(expression):
@@ -231,6 +232,17 @@ def number_to_words(number):
 def number_to_words_one_till_ten(number):
     dic = {0: 'zero', 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten'}
     return dic[number]
+
+
+def get_tokens_from_task_encoder():
+    # in this function we will pass the task tokens and get the tokens that are not to be mapped to
+    # since the task to T5 tokens is a standard mapping, we have a constant and fix tokens which are use
+    special_sym = ['</s>', '▁new', '|', ';', '|', 'x', '▁pair']
+    word_numbers = ['▁zero', '▁one', '▁two', '▁three', '▁four', '▁five', '▁six', '▁seven', '▁eight', '▁nine', '▁ten']
+    # the numbers 0 till 50 as a sting in a list
+    numbers = [str(i) for i in range(51)]
+    return special_sym + word_numbers + numbers
+
 
 def convert2sparse_repeated_numbers(task):
     def fromArray2(narray):
