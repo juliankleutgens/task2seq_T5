@@ -145,9 +145,6 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
         for df in dfs:
             for solver, task, name in zip(df['target'], df['input'], df['name']):
                 string_solver = string_solver + solver + '\n'
-                #task_input = tokenizer(task, return_tensors='pt', padding='max_length', truncation=True, max_length=100)
-                #task_input = tokenizer.convert_ids_to_tokens(task_input['input_ids'][0])
-                #task_tokens = task_tokens + task_input
                 # Update the progress bar
                 pbar.update(1)
 
@@ -188,9 +185,10 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
     tokenstoMap = tokenstoMap + [str(i) for i in range(10)]
     tokenstoMap = list(set(tokenstoMap))
     print('There are ', len(tokenstoMap), ' tokens to map')
-    # all_tokens_minus_used_solver = list(set(all_tokens) - set(string_tokens_to_t5))
+
     dsl_token_mappings = get_mapping(custom_tokens=tokenstoMap, T5_tokens=filtered_tokens)
     save_token_mappings(dsl_token_mappings, filename="dsl_token_mappings_T5.json")
+
     # check if it worked by loading the mapping
     dsl_token_mappings = load_token_mappings(filename="dsl_token_mappings_T5.json")
     if len(dsl_token_mappings) == len(tokenstoMap):
@@ -199,11 +197,6 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
         print('The mapping was not successful')
 
 
-
-# Example usage:
-# custom_tokens = ['exampleToken1', 'exampleToken2']
-# all_tokens = ['sampleToken1', 'sampleToken2', 'exampleToken1']
-# get_mapping(custom_tokens, all_tokens)
 def preprocess_text(text, token_mappings):
     # Split the text into words (or use your own tokenizer)
     words = text.split()
