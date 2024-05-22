@@ -67,8 +67,9 @@ class DataSetClass(Dataset):
             padding_length = self.target_len - len(target_ids)
             target_ids = torch.cat([target_ids, torch.full((padding_length,), self.tokenizer.pad_token_id, dtype=torch.long)])
         if len(target_ids) > self.target_len:
+            l = len(target_ids)
             target_ids = target_ids[:self.target_len]
-            print(f"Target Length Exceeded for {self.name[index]} with length {len(target_ids)} is longer than {self.target_len}")
+            print(f"Target Length Exceeded for {self.name[index]} with length {l} is longer than {self.target_len}")
         # Create attention masks for target
         target_mask = torch.where(target_ids == self.tokenizer.pad_token_id, 0, 1)
 
