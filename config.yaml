@@ -12,7 +12,7 @@ test_paths:
   - '/home/jkleutgens/data_test/gl_schema'
   - '/home/jkleutgens/data_test/or_schema'
 
-load_new_mappings: true
+load_new_mappings: false
 
 device: 'cuda'
 

@@ -1,4 +1,4 @@
-max_samples: 20000
+max_samples: 20
 
 num_of_itr: 1
 
@@ -11,7 +11,7 @@ test_paths:
   - '/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/gl_schema'
   - '/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/or_schema'
 
-load_new_mappings: false
+load_new_mappings: true
 
 sparse_type: 'repeated2words'
 

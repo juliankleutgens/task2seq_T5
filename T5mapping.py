@@ -1,5 +1,6 @@
 import dsl
 from representation import *
+from tqdm import tqdm
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 from transformers import T5Tokenizer
 import json
@@ -129,18 +130,21 @@ def get_mapping(custom_tokens, T5_tokens):
 def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', 'var_to_num'], tokenizer=T5Tokenizer.from_pretrained('t5-small')):
     string_solver = ''
     task_tokens = []
-    print('Commuting a new mappings')
-    for df in dfs:
-        for solver, task, name in zip(df['target'], df['input'], df['name']):
+    print('Computing a new mappings')
+    print('First, concatenate all the solvers and tokenize them')
+
+    for df in tqdm(dfs, desc="DataFrames"):
+        for solver, task, name in tqdm(zip(df['target'], df['input'], df['name']), desc="Tasks", leave=False):
             # concatenate the solver
             string_solver = string_solver + solver + '\n'
-            task_input = tokenizer(task, return_tensors='pt', padding='max_length', truncation=True, max_length=10000)
+            task_input = tokenizer(task, return_tensors='pt', padding='max_length', truncation=True, max_length=100)
             task_input = tokenizer.convert_ids_to_tokens(task_input['input_ids'][0])
             task_tokens = task_tokens + task_input
     string_print, list_of_tokens = reformat_dsl_code(string_solver, extra_token=extra_token)
     all_tokens = list(tokenizer.get_vocab().keys())
 
     # ------------------- filter the T5 tokens I don't want to be mapped to -------------------
+    print('There are ', len(all_tokens), ' tokens in the T5 vocabulary, time to filter them')
     # I want to get rid of all the tokens with an underscore before the word/sentencepiece
     sentence_piece_char = '\u2581'
     # Filter out tokens that start with the SentencePiece character
@@ -151,6 +155,7 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
            token not in map(str, range(50)) and
            token not in task_tokens_set
     ]
+    print('There are ', len(filtered_tokens), ' tokens left after filtering')
 
 
     # ------------------ make a list of all tokens I need to map to the T5 tokens -------------------
