@@ -99,7 +99,9 @@ def load_data(path='ct_schema', maxsamples=None, sparse_type='repeated2words'):
         tasks, solvers, file_names = _read_generated_json_files(path=path, max_sampels=maxsamples)
     else:
         tasks, solvers, file_names = _read_generated_json_files_saperatly(path=path, max_sampels=maxsamples)
-
+    print(f"Read the data successfully from {path}")
+    print(f"Number of tasks: {len(tasks)}")
+    print("Continue with the preprocessing step")
 
     counter = 0
     for task, solver, name in tqdm(zip(tasks, solvers, file_names), desc="Pre Preprocessing step", leave=False):

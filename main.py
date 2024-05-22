@@ -41,19 +41,23 @@ from trainer import  display_df, T5Trainer
 import yaml
 
 # ------------------- load config -------------------
-test_mode = True # set to True if you want to test the code on your local computer
-# Load the configuration from the YAML file
+with open("config.yaml", "r") as file:
+    yaml_cfg = yaml.safe_load(file)
+cfg = OmegaConf.create(yaml_cfg)
+
+test_mode = cfg["test_mode"] # set to True if you want to test the code on your local computer
 if test_mode:
     with open("config_test.yaml", "r") as file:
         yaml_cfg = yaml.safe_load(file)
-else:
-    with open("config.yaml", "r") as file:
-        yaml_cfg = yaml.safe_load(file)
+    cfg = OmegaConf.create(yaml_cfg)
+    print("Test mode is on")
+
 
 
 
 # Convert the dictionary to an OmegaConf object
-cfg = OmegaConf.create(yaml_cfg)
+
+
 max_samples = cfg["max_samples"]
 train_paths = cfg["train_paths"]
 test_paths = cfg["test_paths"]
@@ -78,6 +82,7 @@ dfs_train_list = []
 for path in paths:
     df = load_data(path, maxsamples=max_samples, sparse_type=sparse_type)
     dfs_train_list.append(df)
+print("Training Data loaded successfully")
 
 # ------------------- get Testing data -------------------
 # paths_test = ['/data_test/ct_schema', '/data_test/gl_schema', '/data_test/or_schema']
@@ -87,7 +92,7 @@ dfs_test_list = []
 for path in paths_test:
     df = load_data(path, maxsamples=max_samples, sparse_type=sparse_type)
     dfs_test_list.append(df)
-
+print("Testing Data loaded successfully")
 # ------------------- get new mapping if necessary -------------------
 # set to True if you want to load new mappings
 # but leave it to False if you have already loaded the mappings,

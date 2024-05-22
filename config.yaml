@@ -1,10 +1,11 @@
-max_samples: -1
+max_samples: 20000
 
 num_of_itr: 7500
 
 train_paths:
   - '/home/jkleutgens/training_data'
 
+test_mode: false
 
 test_paths:
   - '/home/jkleutgens/data_test/ct_schema'
@@ -32,7 +33,7 @@ model_params:
   TRAIN_EPOCHS: 10
   VAL_EPOCHS: 1
   LEARNING_RATE: 1.0e-4
-  MAX_SOURCE_TEXT_LENGTH: 2048
+  MAX_SOURCE_TEXT_LENGTH: 1024
   MAX_TARGET_TEXT_LENGTH: 256
   SEED: 42
 

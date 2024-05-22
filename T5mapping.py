@@ -129,6 +129,7 @@ def get_mapping(custom_tokens, T5_tokens):
 def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', 'var_to_num'], tokenizer=T5Tokenizer.from_pretrained('t5-small')):
     string_solver = ''
     task_tokens = []
+    print('Commuting a new mappings')
     for df in dfs:
         for solver, task, name in zip(df['target'], df['input'], df['name']):
             # concatenate the solver
