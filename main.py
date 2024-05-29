@@ -65,6 +65,7 @@ load_new_mappings = cfg["load_new_mappings"]
 extra_token = cfg["extra_token"]
 wandb_cfg = cfg["wandb"]
 sparse_type = cfg["sparse_type"]
+type_of_mapping = cfg["type_of_mapping"]
 
 wandb.init(
     entity=wandb_cfg["wandb_user"],
@@ -100,7 +101,7 @@ print("Testing Data loaded successfully")
 if load_new_mappings:
     tokenizer = T5Tokenizer.from_pretrained('t5-small')
     dfs = dfs_train_list + dfs_test_list
-    save_new_mapping_from_df(dfs, extra_token, tokenizer)
+    save_new_mapping_from_df(dfs, extra_token, tokenizer , type_of_mapping)
 
 # concatenate all the data
 for i, df in enumerate(dfs_train_list):

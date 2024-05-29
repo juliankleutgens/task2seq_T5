@@ -77,6 +77,7 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
 
     # ------------------- load device -------------------
     model_params = cfg["model_params"]
+    extra_tokens = cfg["extra_token"]
     if cfg["device"] == "cuda":
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if device.type == "cuda":
@@ -126,7 +127,7 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     console.print(f"TRAIN Dataset: {train_dataset.shape}")
     # Creating the Training and Validation dataset for further creation of Dataloader
     training_set = DataSetClass(train_dataset, tokenizer, model_params["MAX_SOURCE_TEXT_LENGTH"],
-                                    model_params["MAX_TARGET_TEXT_LENGTH"], source_text, target_text)
+                                    model_params["MAX_TARGET_TEXT_LENGTH"], source_text, target_text, extra_tokens)
     # Defining the parameters for creation of dataloaders
     train_params = {
         'batch_size': model_params["TRAIN_BATCH_SIZE"],
@@ -144,7 +145,7 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
         val_dataset = dataframe_test.reset_index(drop=True)
         console.print(f"TEST Dataset: {val_dataset.shape}\n")
         val_set = DataSetClass(val_dataset, tokenizer, model_params["MAX_SOURCE_TEXT_LENGTH"],
-                                   model_params["MAX_TARGET_TEXT_LENGTH"], source_text, target_text)
+                                   model_params["MAX_TARGET_TEXT_LENGTH"], source_text, target_text, extra_tokens)
         val_params = {
             'batch_size': model_params["VALID_BATCH_SIZE"],
             'shuffle': False,

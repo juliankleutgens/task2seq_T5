@@ -1,4 +1,4 @@
-max_samples: 1
+max_samples: 3
 
 num_of_itr: 1
 
@@ -11,7 +11,8 @@ test_paths:
   - '/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/gl_schema'
   - '/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/or_schema'
 
-load_new_mappings: false
+load_new_mappings: true
+type_of_mapping: 'x2y'
 
 sparse_type: 'repeated2words'
 
@@ -21,7 +22,6 @@ output_dir: './outputs/'
 
 extra_token:
   - 'sym_aft_func'
-  - 'BoF'
   - 'EoF'
   - 'var_to_num'
 

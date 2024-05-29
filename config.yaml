@@ -1,6 +1,6 @@
 max_samples: -1
 
-num_of_itr: 10000
+num_of_itr: 15000
 
 train_paths:
   - '/home/jkleutgens/training_data'
@@ -13,6 +13,7 @@ test_paths:
   - '/home/jkleutgens/data_test/or_schema'
 
 load_new_mappings: false
+type_of_mapping: 'val2alphabet'
 
 device: 'cuda'
 

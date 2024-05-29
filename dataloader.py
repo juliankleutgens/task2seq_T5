@@ -23,7 +23,7 @@ class DataSetClass(Dataset):
     Creating a custom dataset for reading the dataset and
     loading it into the dataloader to pass it to the neural network for finetuning the model.
     """
-    def __init__(self, dataframe, tokenizer, source_len, target_len, source_text, target):
+    def __init__(self, dataframe, tokenizer, source_len, target_len, source_text, target, extra_tokens):
         self.tokenizer = tokenizer
         self.data = dataframe
         self.source_len = source_len
@@ -31,7 +31,7 @@ class DataSetClass(Dataset):
         self.target_text = self.data[target]
         self.source_text = self.data[source_text]
         self.name = self.data['name']
-        self.extra_token = ['sym_aft_func', 'BoF', 'EoF', 'var_to_num']
+        self.extra_token = extra_tokens
 
     def __len__(self):
         return len(self.target_text)
@@ -48,8 +48,7 @@ class DataSetClass(Dataset):
             max_length=self.source_len,
             padding='max_length',
             truncation=True,
-            return_tensors='pt'
-        )
+            return_tensors='pt')
 
         #print("tokenized_task_sample_length",len(self.tokenizer.tokenize(source_text)))
         #print("encoded_task_sample_length", source_encoded['input_ids'].shape[1])

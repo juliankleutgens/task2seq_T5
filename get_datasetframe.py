@@ -128,10 +128,10 @@ def convert_task(task, sparse_type='repeated2words'):
     task_all_pairs = ''
     for i in task:
         if sparse_type == 'codeit':
-            task_all_pairs += ' new pair'
+            #task_all_pairs += ' new pair'
             task_desc = convert2sparse(i)
         elif sparse_type == 'repeated2words':
-            task_all_pairs += ' new pair'
+            #task_all_pairs += ' new pair'
             task_desc = convert2sparse_repeated_numbers(i)
         else:
             print('decode the task with given sparse type not found in configuration file.')
@@ -144,7 +144,7 @@ def load_data(path='ct_schema', maxsamples=-1, sparse_type='repeated2words'):
     dataset_dict = {'input': [], 'target': [], 'name': []}
     # Load the T5 tokenizer
     if path.find('data_test') != -1:
-        maxsamples = 3000 # we have 3000 test samples
+        maxsamples = 1000 # we have 3000 test samples
     if path.find('training_data') != -1:
         tasks, solvers, file_names = _read_generated_json_files_saperatly(path=path, max_sampels=maxsamples)
     elif path.find('abstraction-and-reasoning-challenge') != -1:

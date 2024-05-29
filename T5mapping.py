@@ -4,10 +4,11 @@ from tqdm import tqdm
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 from transformers import T5Tokenizer
 import json
-from fuzzywuzzy import process
+from rapidfuzz import process
 import time
 import numpy as np
 from utils import *
+from Levenshtein import distance as levenshtein_distance
 
 def map_to_t5_token(string_solver,extra_token = ['sym_aft_func', 'BoF', 'EoF'], tokenizer=T5Tokenizer.from_pretrained('t5-small'), loading_new_mappings = True):
     string_print, list_of_tokens = reformat_dsl_code(string_solver, extra_token=extra_token)
@@ -15,33 +16,8 @@ def map_to_t5_token(string_solver,extra_token = ['sym_aft_func', 'BoF', 'EoF'], 
     if list_of_tokens is None:
         error_message = "The list of tokens is empty. Please check the reformat_dsl_code function."
         return error_message
-
-    if not (dsl_token_mappings is not None and not loading_new_mappings):
-        # Load the T5 tokenizer
-        all_tokens = list(tokenizer.get_vocab().keys())
-        # List of custom tokens
-        # all tokens from the dsl.py file + the tokens from the solver.py file
-        dsl_func = get_all_dsl_tokens()
-        tokenstoMap = list(set(list_of_tokens)) + dsl_func
-
-        if 'sym_aft_func' in extra_token:
-            tokenstoMap.append(';')
-        if 'BoF' in extra_token:
-            tokenstoMap.append('#BoF')
-        if 'EoF' in extra_token:
-            tokenstoMap.append('#EoF')
-        tokenstoMap.append('#newline')
-
-        tokenstoMap = list(set(tokenstoMap))
-        #all_tokens_minus_used_solver = list(set(all_tokens) - set(string_tokens_to_t5))
-        dsl_token_mappings = get_mapping(custom_tokens=tokenstoMap, T5_tokens=all_tokens)
-        save_token_mappings(dsl_token_mappings, filename="dsl_token_mappings_T5.json")
-
-
-
-    processed_text = preprocess_text(string_print, dsl_token_mappings)
     list_of_tokens_T5 = map_list(list_of_tokens, dsl_token_mappings)
-    T5_tokens_list = tokenizer.tokenize(processed_text)
+
     if loading_new_mappings:
         print("--------------------- Example DSL ---------------------")
         print('---- DSL with our Tokens ----')
@@ -96,65 +72,166 @@ def load_token_mappings(filename="dsl_token_mappings_T5.json"):
         return None
 
 
-def get_mapping(custom_tokens, T5_tokens):
+def get_best_match_levenstein(token, all_tokens, used_matches):
+    distances = [(other, levenshtein_distance(token, other)) for other in all_tokens]
+    distances.sort(key=lambda x: x[1])
+
+    for match, dist in distances:
+        if match not in used_matches:
+            return match, dist
+    return None, None
+
+
+def get_mapping(custom_tokens, T5_tokens, extra_token , type_of_mapping, tokenizer):
     """Generates mappings of custom tokens to T5 vocabulary tokens, ensuring unique mappings and excluding '</s>'."""
 
 
     token_mappings = {}  # Initialize an empty dictionary for token mappings
     used_matches = set()  # Initialize an empty set to track used T5 tokens
-    all_tokens = set(T5_tokens) - {'<pad>', '</s>', '<unk>'}  # Exclude '</s>' from potential matches
+    all_tokens = set(T5_tokens) - {'<pad>', '</s>', '<unk>'}
+    xnum2alp = alphabet_mapping(all_tokens)# Exclude '</s>' from potential matches
+    if type_of_mapping == 'val2alphabet':
+        used_matches = set(xnum2alp.values())
+    elif type_of_mapping == 'val2num':
+        used_matches = set([str(i) for i in range(100)])
+
     i = 0
+    tokens_with_nomatch = []
     for token in custom_tokens:
         i += 1
-        # Find the best match that is not already used
-        best_match, score = None, None
-        potential_matches = process.extract(token, all_tokens, limit=10)  # Get top 10 matches to find an unused best match
-        for match, match_score in potential_matches:
-            if match not in used_matches:
-                best_match, score = match, match_score
-            else:
-                print(f"{i}: Match {match} is already used. Skipping.")
-                continue
+        if token == '#EoF':
+            token_mappings[token] = '</s>' # Map '#EoF' to '</s>'
+            print(f"{i}: The {token} must be mapped to </s>")
+            continue
 
+        if token == 'x' and type_of_mapping == 'x2y':
+            token_mappings[token] = 'y'
+            print(f"{i}: {token} must be mapped to y")
+            continue
+        used_matches.add('y')
+
+        if token.startswith('x') and type_of_mapping == 'val2num':
+            token_mappings[token] = str(int(token[1:]))
+            used_matches.add(str(int(token[1:])))
+            print(f"{i}: {token} is mapped to {str(int(token[1:]))}")
+            continue
+
+        if token.startswith('x') and type_of_mapping == 'val2alphabet':
+            token_mappings[token] = xnum2alp[token]
+            used_matches.add(xnum2alp[token])
+            print(f"{i}: {token} is mapped to {token_mappings[token]}")
+            continue
+
+        new_token = function_is_token(token, all_tokens)
+        if new_token is not None:
+            if not new_token in used_matches:
+                token_mappings[token] = new_token
+                used_matches.add(new_token)
+                print(f"{i}: Perfect Match: {token} is mapped to {new_token}")
+                continue
+            else:
+                print(f"{i}: Want to map {token} to {new_token}, but it is already used. Must choose differently.")
+        tokens_with_nomatch.append(token)
+        i = i - 1
+
+    for token in tokens_with_nomatch:
+        i += 1
+        # could not find a perfect match so use Levenshtein distance to find
+        # the next similar match in the T5 tokens
+        best_match, score = get_best_match_levenstein(token, all_tokens, used_matches)
         if best_match:
             token_mappings[token] = best_match
-            used_matches.add(best_match)  # Mark this match as used
+            used_matches.add(best_match)
             print(f"{i}: Best match for {token} is {best_match} with a score of {score}")
         else:
             print(f"{i}: No available unique match for {token}.")
-            # then choose one randomly from the all tokens
             best_match = list(all_tokens)[np.random.randint(0, len(all_tokens))]
             token_mappings[token] = best_match
+            print(f"{i}: Randomly selected match for {token} is {best_match}.")
             used_matches.add(best_match)
         all_tokens.remove(best_match)  # Remove the match from potential matches
 
     save_token_mappings(token_mappings)
     return token_mappings
 
-def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', 'var_to_num'], tokenizer=T5Tokenizer.from_pretrained('t5-small')):
+def alphabet_mapping(model_tokens):
+    # capital letters
+    alphabet = []
+
+    # small letters
+    # for i in range(1, 27):
+    #   alphabet.append(chr(i + 96))
+
+    # capital letters with sentence piece
+    # sentence_piece_char = '\u2581'
+    # for i in range(1, 27):
+    # alphabet.append(sentence_piece_char + chr(i+64))
+
+    # capital letters
+    for i in range(1, 27):
+        alphabet.append(chr(64 + i))
+    len(alphabet)
+    for i in range(1, 27):
+        for j in range(1, 27):
+            if chr(64 + i) + chr(64 + j) in model_tokens and len(alphabet) < 100:
+                alphabet.append(chr(64 + i) + chr(64 + j))
+    dic = {}
+    for i in range(1,100):
+        val = 'x'+str(i)
+        dic[val] = alphabet[i-1]
+    return dic
+
+
+def function_is_token(token,model_tokens):
+    sentence_piece_char = '\u2581'
+    token0 = token
+    token1 = sentence_piece_char + token
+    # make the word lower case
+    token2 = token.lower()
+    token3 = sentence_piece_char + token2
+    # make only the first letter capital
+    token4 = token.capitalize()
+    token5 = sentence_piece_char + token4
+    # make all the letters capital
+    token6 = token.upper()
+    token7 = sentence_piece_char + token6
+    # look if it is in model tokens
+    check_tokens = [token0, token1, token2, token3, token4, token5, token6, token7]
+    for token in check_tokens:
+        if token in model_tokens:
+            return token
+    return None
+
+
+
+def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', 'var_to_num'], tokenizer=T5Tokenizer.from_pretrained('t5-small'), type_of_mapping='x2y'):
     string_solver = ''
     task_tokens = []
     print('Computing a new mappings')
     print('First, concatenate all the solvers and tokenize them')
+    # debug stuff
+    if (type_of_mapping == 'val2num' or type_of_mapping == 'val2alphabet') and 'var_to_num' in extra_token:
+        raise ValueError("You can't use val2num or val2alphabet as type of mapping and var_to_num as extra tokens: us extra_token = ['sym_aft_func', 'EoF'] instead")
+    if type_of_mapping == 'x2y' and not 'var_to_num' in extra_token:
+        raise ValueError("You must use var_to_num as extra token when using x2y as type of mapping")
     # Initialize the total time counters
     # Calculate the total number of tasks to be processed
     total_tasks = sum(len(df) for df in dfs)
 
     # Initialize the progress bar
-    with tqdm(total=total_tasks, desc="Processing tasks") as pbar:
+    with tqdm(total=total_tasks, desc="Getting string of Solver.py") as pbar:
         for df in dfs:
             for solver, task, name in zip(df['target'], df['input'], df['name']):
                 string_solver = string_solver + solver + '\n'
                 # Update the progress bar
                 pbar.update(1)
-
-    tokens_from_task_encoder = get_tokens_from_task_encoder()
-    task_tokens = tokens_from_task_encoder
     start_time = time.time()
     string_print, list_of_tokens = reformat_dsl_code(string_solver, extra_token=extra_token)
     time_to_reformat = time.time() - start_time
     print('Time to reformat the DSL code: ', time_to_reformat)
+
     all_tokens = list(tokenizer.get_vocab().keys())
+    task_tokens = get_tokens_from_task_encoder()
 
     # ------------------- filter the T5 tokens I don't want to be mapped to -------------------
     print('There are ', len(all_tokens), ' tokens in the T5 vocabulary, time to filter them')
@@ -162,12 +239,18 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
     sentence_piece_char = '\u2581'
     # Filter out tokens that start with the SentencePiece character
     task_tokens_set = set(task_tokens)  # Convert to set for faster lookup
-    filtered_tokens = [
-        token for token in all_tokens
-        if not token.startswith(sentence_piece_char) and
-           token not in map(str, range(50)) and
-           token not in task_tokens_set
-    ]
+    if type_of_mapping != 'val2num':
+        filtered_tokens = [
+            token for token in all_tokens
+            if token not in map(str, range(50)) and
+               token not in task_tokens_set
+        ]
+    else:
+        # not token.startswith(sentence_piece_char) and
+        filtered_tokens = [
+            token for token in all_tokens
+            if token not in task_tokens_set
+        ]
     print('There are ', len(filtered_tokens), ' tokens left after filtering')
 
 
@@ -175,18 +258,23 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
     dsl_func = get_all_dsl_tokens()
     dsl_constants = get_all_dsl_constants()
     tokenstoMap = list(set(list_of_tokens)) + dsl_func + dsl_constants
+    tokenstoMap.append('#newline')
     if 'sym_aft_func' in extra_token:
         tokenstoMap.append(';')
     if 'BoF' in extra_token:
         tokenstoMap.append('#BoF')
     if 'EoF' in extra_token:
         tokenstoMap.append('#EoF')
-    tokenstoMap.append('#newline')
-    tokenstoMap = tokenstoMap + [str(i) for i in range(10)]
+    if 'var_to_num' in extra_token:
+        tokenstoMap = tokenstoMap + [str(i) for i in range(10)] + ['x']
+    else:
+        tokenstoMap = tokenstoMap + ['x' + str(i) for i in range(1,100)]
+
     tokenstoMap = list(set(tokenstoMap))
     print('There are ', len(tokenstoMap), ' tokens to map')
 
-    dsl_token_mappings = get_mapping(custom_tokens=tokenstoMap, T5_tokens=filtered_tokens)
+    dsl_token_mappings = get_mapping(custom_tokens=tokenstoMap, T5_tokens=filtered_tokens,extra_token=extra_token,
+                                     type_of_mapping=type_of_mapping, tokenizer=tokenizer)
     save_token_mappings(dsl_token_mappings, filename="dsl_token_mappings_T5.json")
 
     # check if it worked by loading the mapping
@@ -326,6 +414,17 @@ def reconstruct_code(token_list, name_idx='005t822n'):
     return ''.join(output)
 
 
+def get_best_match(token, all_tokens, used_matches, vectorizer, vectors):
+    token_vec = vectorizer.transform([token]).toarray()
+    cosine_similarities = cosine_similarity(token_vec, vectors).flatten()
+
+    matches = [(all_tokens[i], cosine_similarities[i]) for i in range(len(all_tokens))]
+    matches.sort(key=lambda x: x[1], reverse=True)
+
+    for match, score in matches:
+        if match not in used_matches:
+            return match, score
+    return None, None
 
 if __name__ == "__main__":
     # get the file content and the solver.py file

@@ -249,15 +249,19 @@ def number_to_words_one_till_ten(number):
     dic = {0: 'zero', 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten'}
     return dic[number]
 
+def number_to_color(number):
+    dic = {0: '▁Black', 1: '▁Blue', 2: '▁Red', 3: '▁Green', 4: '▁Yellow', 5: '▁Gray', 6: '▁Purple', 7: '▁Orange', 8: '▁Azure', 9: '▁Brown', 10: '▁White'}
+    return dic[number]
 
 def get_tokens_from_task_encoder():
     # in this function we will pass the task tokens and get the tokens that are not to be mapped to
     # since the task to T5 tokens is a standard mapping, we have a constant and fix tokens which are use
-    special_sym = ['</s>', '▁new', '|', ';', '|', 'x', '▁pair']
+    special_sym = ['</s>', '▁new', '|', ';', '|', 'x', '▁pair', '▁input', '▁output']
     word_numbers = ['▁zero', '▁one', '▁two', '▁three', '▁four', '▁five', '▁six', '▁seven', '▁eight', '▁nine', '▁ten']
     # the numbers 0 till 50 as a sting in a list
+    color_words = ['▁Black', '▁Blue', '▁Red', '▁Green', '▁Yellow', '▁Gray', '▁Purple', '▁Orange', '▁Azure', '▁Brown', '▁White']
     numbers = [str(i) for i in range(51)]
-    return special_sym + word_numbers + numbers
+    return special_sym + word_numbers + numbers + color_words
 
 
 def convert2sparse_repeated_numbers(task):
@@ -274,10 +278,10 @@ def convert2sparse_repeated_numbers(task):
                 while idx + count < len(row_) and row_[idx] == row_[idx + count]:
                     count += 1
                 if count >= 5:
-                    flatgrid_str += ' ' + str(number_to_words_one_till_ten(row_[idx])) + 'x' + str(count)
+                    flatgrid_str += ' ' + str(number_to_color(row_[idx])) + 'x' + str(count)
                 else:
                     for num in row_[idx:idx + count]:
-                        word = number_to_words_one_till_ten(num)
+                        word = number_to_color(num)
                         flatgrid_str += ' ' + word
                 idx += count
             flatgrid_str += ';'
@@ -285,7 +289,7 @@ def convert2sparse_repeated_numbers(task):
 
     input_ = task[0]
     output_ = task[1]
-    sparse_task = fromArray2(input_) + '|' + fromArray2(output_)
+    sparse_task = ' input' + fromArray2(input_) + ' output' + fromArray2(output_)
     return sparse_task
 
 

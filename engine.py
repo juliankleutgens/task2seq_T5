@@ -33,6 +33,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 import wandb
+import Levenshtein
 from dataloader import DataSetClass
 
 
@@ -87,17 +88,15 @@ def train(epoch, tokenizer, model, device, loader, optimizer, console=Console(),
 
     # Initialize accumulators for scores
     total_bleu_score = 0
-    total_rouge_1_f = 0
-    total_rouge_2_f = 0
-    total_rouge_l_f = 0
+    total_levenshtein_distance = 0
     num_datasets = len(val_loader_list)
     for i, val_loader in enumerate(val_loader_list):
         test_set = test_paths[i][test_paths[i].rfind('/'):]
         console.print(f"Validation for dataset {test_paths[i]}")
-        predictions, actuals, avg_bleu_score, bleu_scores = validate(epoch=epoch, tokenizer=tokenizer, model=model, device=device,
+        predictions, actuals, avg_bleu_score, bleu_scores, avg_levenshtein_distance = validate(epoch=epoch, tokenizer=tokenizer, model=model, device=device,
                                         loader=val_loader,
                                         model_params=model_params, num_batches=cfg["model_params"]["VALID_BATCH_SIZE"])
-        final_df = pd.DataFrame({'Epoch':epoch,'Testset': test_set,'Average Blue Score':bleu_scores,'Generated Text': predictions, 'Actual Text': actuals})
+        final_df = pd.DataFrame({'Epoch':epoch,'Testset': test_set,'Average Blue Score':bleu_scores, 'Levenshtein': avg_levenshtein_distance,'Generated Text': predictions, 'Actual Text': actuals})
 
         if epoch == 0 and i == 0:
             final_df.to_csv(os.path.join(output_dir, 'predictions.csv'), mode='w', header=True, index=False)
@@ -105,14 +104,19 @@ def train(epoch, tokenizer, model, device, loader, optimizer, console=Console(),
             final_df.to_csv(os.path.join(output_dir, 'predictions.csv'), mode='a', header=False, index=False)
         # Accumulate scores
         total_bleu_score += avg_bleu_score
+        total_levenshtein_distance += avg_levenshtein_distance
+
     # Calculate average scores across all datasets
     avg_bleu_score_overall = total_bleu_score / num_datasets
+    avg_levenshtein_overall = total_levenshtein_distance / num_datasets
 
     # Log the overall average metrics to wandb
     wandb.log({
         "avg_bleu_score": avg_bleu_score_overall,
+        "avg_levenshtein_distance": avg_levenshtein_overall
     })
     print(f"avg_bleu_score: {avg_bleu_score_overall}")
+    print(f"avg_levenshtein_distance: {avg_levenshtein_overall}")
 
 
 def validate(epoch, tokenizer, model, device, loader, model_params, num_batches):
@@ -123,6 +127,7 @@ def validate(epoch, tokenizer, model, device, loader, model_params, num_batches)
     predictions = []
     actuals = []
     bleu_scores = []
+    levenshtein_distances = []
     iteration = 0
 
     with torch.no_grad():
@@ -171,9 +176,14 @@ def validate(epoch, tokenizer, model, device, loader, model_params, num_batches)
                 score = sentence_bleu([act], pred, smoothing_function=SmoothingFunction().method1)
                 bleu_scores.append(score)
 
+                # Flatten the lists of tokens into strings for Levenshtein distance
+                pred_str = ''.join(pred)
+                act_str = ''.join(act)
+                levenshtein_distance = Levenshtein.distance(pred_str, act_str)
+                levenshtein_distances.append(levenshtein_distance)
 
-
+        avg_levenshtein_distance = sum(levenshtein_distances) / len(levenshtein_distances)
         avg_bleu_score = sum(bleu_scores) / len(bleu_scores)
 
 
-    return predictions, actuals, avg_bleu_score, bleu_scores
+    return predictions, actuals, avg_bleu_score, bleu_scores, avg_levenshtein_distance
