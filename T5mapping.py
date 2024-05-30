@@ -218,13 +218,16 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
     # Calculate the total number of tasks to be processed
     total_tasks = sum(len(df) for df in dfs)
 
-    # Initialize the progress bar
+    # this is just for getting some strings solver.py in theory should be one enough
+    j = 0
     with tqdm(total=total_tasks, desc="Getting string of Solver.py") as pbar:
         for df in dfs:
             for solver, task, name in zip(df['target'], df['input'], df['name']):
-                string_solver = string_solver + solver + '\n'
-                # Update the progress bar
-                pbar.update(1)
+                if j < 10000:
+                    string_solver = string_solver + solver + '\n'
+                    # Update the progress bar
+                    pbar.update(1)
+                    j += 1
     start_time = time.time()
     string_print, list_of_tokens = reformat_dsl_code(string_solver, extra_token=extra_token)
     time_to_reformat = time.time() - start_time
