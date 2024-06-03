@@ -152,7 +152,7 @@ def validate(epoch, tokenizer, model, device, loader, model_params, num_batches)
             for gen_id in generated_ids:
                 one_sample_pred = []
                 for _id in gen_id:
-                    token = tokenizer.decode(_id, skip_special_tokens=True, clean_up_tokenization_spaces=True)
+                    token = tokenizer.convert_ids_to_tokens(int(_id))
                     one_sample_pred.append(token)
                 our_token_sample = map_back(one_sample_pred)
                 preds.append(our_token_sample)
@@ -162,7 +162,7 @@ def validate(epoch, tokenizer, model, device, loader, model_params, num_batches)
             for t in y:
                 one_sample_target = []
                 for _id in t:
-                    token = tokenizer.decode(_id, skip_special_tokens=True, clean_up_tokenization_spaces=True)
+                    token = tokenizer.convert_ids_to_tokens(int(_id))
                     one_sample_target.append(token)
                 our_token_sample = map_back(one_sample_target)
                 target.append(our_token_sample)

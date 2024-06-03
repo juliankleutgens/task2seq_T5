@@ -8,7 +8,7 @@ import random
 # file_path = 'predictions.csv'
 my_path = current_path = os.getcwd()
 # /Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/outputs/predictions.csv
-path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240522_2150/predictions.csv'
+path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240530_2209/predictions.csv'
 file_path = os.path.join(my_path, )
 data = pd.read_csv(path)
 

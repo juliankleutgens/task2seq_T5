@@ -110,6 +110,17 @@ def get_mapping(custom_tokens, T5_tokens, extra_token , type_of_mapping, tokeniz
             continue
         used_matches.add('y')
 
+        if token == 'T' or token == 'F':
+            if token == 'T':
+                new_token = function_is_token('True', all_tokens)
+            elif token == 'F':
+                new_token = function_is_token('False', all_tokens)
+            if new_token is not None:
+                token_mappings[token] = new_token
+                used_matches.add(new_token)
+                print(f"{i}: {token} is mapped to {new_token}")
+                continue
+
         if token.startswith('x') and type_of_mapping == 'val2num':
             token_mappings[token] = str(int(token[1:]))
             used_matches.add(str(int(token[1:])))
