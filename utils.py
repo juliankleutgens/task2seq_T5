@@ -139,6 +139,10 @@ def get_all_dsl_tokens():
 
 def read_solver_file(path):
     # Get the current working directory
+    if path[-12:] == 'verifiers.py':
+        with open(path, 'r') as file:
+            data = file.read()
+        return data
     if path[:7] == "/Users/" or path[:6] == "/home/":
         path_solver = path + '/solvers.py'
     else:
@@ -277,7 +281,7 @@ def convert2sparse_repeated_numbers(task):
                 count = 0
                 while idx + count < len(row_) and row_[idx] == row_[idx + count]:
                     count += 1
-                if count >= 5:
+                if count >= 4:
                     flatgrid_str += ' ' + str(number_to_color(row_[idx])) + 'x' + str(count)
                 else:
                     for num in row_[idx:idx + count]:

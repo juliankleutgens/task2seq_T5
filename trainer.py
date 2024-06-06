@@ -34,6 +34,7 @@ from rich.table import Table
 import wandb
 from dataloader import DataSetClass
 from engine import train, validate
+import matplotlib.pyplot as plt
 
 
 def display_df(df):
@@ -162,9 +163,39 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
 
     # ------------------- Training and Validation Loop -------------------
     for epoch in range(model_params["TRAIN_EPOCHS"]):
-        train(epoch, tokenizer=tokenizer, model=model, device=device, loader=training_loader, optimizer=optimizer,
+        metrics_blue, metrics_leven = train(epoch, tokenizer=tokenizer, model=model, device=device, loader=training_loader, optimizer=optimizer,
             console=console, cfg=cfg, val_loader_list=val_loader_list)
 
+        # --------- save the data to a plot file ---------
+        # Convert metrics to DataFrame
+        df_metrics_blue = pd.DataFrame([metrics_blue])
+        df_metrics_leven = pd.DataFrame([metrics_leven])
+
+        if epoch == 0:
+            all_metrics_blue = df_metrics_blue
+            all_metrics_leven = df_metrics_leven
+        else:
+            all_metrics_blue = pd.concat([all_metrics_blue, df_metrics_blue], ignore_index=True)
+            all_metrics_leven = pd.concat([all_metrics_leven, df_metrics_leven], ignore_index=True)
+
+    # Plot the metrics for the training
+    def plot_metrics(all_metrics, metric_name, output_dir):
+        """Plot the metrics"""
+        plt.figure()
+        for column in all_metrics.columns:
+            if column == 'epoch':
+                continue
+            plt.plot(all_metrics[column], label=column)
+        plt.xlabel('Epoch')
+        plt.ylabel(metric_name)
+        plt.title(f'{metric_name} over Epochs')
+        plt.legend()
+        plt.savefig(os.path.join(output_dir, f'{metric_name}_metrics.png'))
+        plt.show()
+
+    console.log(f"[Plotting Metrics]...\n")
+    plot_metrics(all_metrics_blue, 'BLEU Score', output_dir)
+    plot_metrics(all_metrics_leven, 'Levenshtein Distance', output_dir)
 
     console.save_text(os.path.join(output_dir, 'logs.txt'))
 

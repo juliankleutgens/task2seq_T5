@@ -85,18 +85,26 @@ def train(epoch, tokenizer, model, device, loader, optimizer, console=Console(),
 
     # evaluating test dataset
     console.log(f"[Initiating Validation]...\n")
-
+    metrics_blue = {"epoch": epoch}
+    metrics_leven = {"epoch": epoch}
     # Initialize accumulators for scores
     total_bleu_score = 0
     total_levenshtein_distance = 0
     num_datasets = len(val_loader_list)
     for i, val_loader in enumerate(val_loader_list):
         test_set = test_paths[i][test_paths[i].rfind('/'):]
+        if test_set == '/training':
+            test_set = 'Real ARC Training Data'
         console.print(f"Validation for dataset {test_paths[i]}")
-        predictions, actuals, avg_bleu_score, bleu_scores, avg_levenshtein_distance = validate(epoch=epoch, tokenizer=tokenizer, model=model, device=device,
-                                        loader=val_loader,
+        predictions, actuals, avg_bleu_score, bleu_scores, avg_levenshtein_distance, levenshtein_distances= validate(epoch=epoch,
+                                        tokenizer=tokenizer, model=model, device=device, loader=val_loader,
                                         model_params=model_params, num_batches=cfg["model_params"]["VALID_BATCH_SIZE"])
-        final_df = pd.DataFrame({'Epoch':epoch,'Testset': test_set,'Average Blue Score':bleu_scores, 'Levenshtein': avg_levenshtein_distance,'Generated Text': predictions, 'Actual Text': actuals})
+        final_df = pd.DataFrame({'Epoch':epoch,
+                                 'Testset': test_set,
+                                 'Average Blue Score':bleu_scores,
+                                 'Levenshtein': levenshtein_distances,
+                                 'Generated Text': predictions,
+                                 'Actual Text': actuals})
 
         if epoch == 0 and i == 0:
             final_df.to_csv(os.path.join(output_dir, 'predictions.csv'), mode='w', header=True, index=False)
@@ -105,18 +113,32 @@ def train(epoch, tokenizer, model, device, loader, optimizer, console=Console(),
         # Accumulate scores
         total_bleu_score += avg_bleu_score
         total_levenshtein_distance += avg_levenshtein_distance
+        # Log dataset-specific metrics to WandB
+        #wandb.log({
+        #    f"{test_set}/avg_bleu_score": avg_bleu_score,
+        #    f"{test_set}/avg_levenshtein_distance": avg_levenshtein_distance,
+        #    "epoch": epoch
+        #})
+        # Collect dataset-specific metrics
+        metrics_blue[f"{test_set}/bleu_score"] = avg_bleu_score
+        metrics_leven[f"{test_set}/levenshtein_distance"] = avg_levenshtein_distance
 
     # Calculate average scores across all datasets
     avg_bleu_score_overall = total_bleu_score / num_datasets
     avg_levenshtein_overall = total_levenshtein_distance / num_datasets
-
-    # Log the overall average metrics to wandb
-    wandb.log({
-        "avg_bleu_score": avg_bleu_score_overall,
-        "avg_levenshtein_distance": avg_levenshtein_overall
-    })
+    metrics_blue["bleu_score_overall"] = avg_bleu_score_overall
+    metrics_leven["avg_levenshtein_distance_overall"] = avg_levenshtein_overall
+    # Log the overall average metrics to WandB
+    #wandb.log({
+    #    "avg_bleu_score_overall": avg_bleu_score_overall,
+    #    "avg_levenshtein_distance_overall": avg_levenshtein_overall,
+    #    "epoch": epoch
+    #})
+    wandb.log(metrics_blue)
+    wandb.log(metrics_leven)
     print(f"avg_bleu_score: {avg_bleu_score_overall}")
     print(f"avg_levenshtein_distance: {avg_levenshtein_overall}")
+    return metrics_blue, metrics_leven
 
 
 def validate(epoch, tokenizer, model, device, loader, model_params, num_batches):
@@ -173,7 +195,16 @@ def validate(epoch, tokenizer, model, device, loader, model_params, num_batches)
                 #break
             # Calculate BLEU scores
             for pred, act in zip(preds, target):
-                score = sentence_bleu([act], pred, smoothing_function=SmoothingFunction().method1)
+                # trim the list of if the token #EoF is present
+                if '#EoF' in pred:
+                    pred_blue = pred[:pred.index('#EoF')+1]
+                else:
+                    pred_blue = pred
+                if '#EoF' in act:
+                    act_blue = act[:act.index('#EoF')+1]
+                else:
+                    act_blue = act
+                score = sentence_bleu([act_blue], pred_blue, smoothing_function=SmoothingFunction().method1)
                 bleu_scores.append(score)
 
                 # Flatten the lists of tokens into strings for Levenshtein distance
@@ -186,4 +217,4 @@ def validate(epoch, tokenizer, model, device, loader, model_params, num_batches)
         avg_bleu_score = sum(bleu_scores) / len(bleu_scores)
 
 
-    return predictions, actuals, avg_bleu_score, bleu_scores, avg_levenshtein_distance
+    return predictions, actuals, avg_bleu_score, bleu_scores, avg_levenshtein_distance, levenshtein_distances

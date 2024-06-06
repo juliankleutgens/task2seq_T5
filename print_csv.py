@@ -8,7 +8,8 @@ import random
 # file_path = 'predictions.csv'
 my_path = current_path = os.getcwd()
 # /Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/outputs/predictions.csv
-path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240530_2209/predictions.csv'
+#path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240603_1912/predictions.csv'
+path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240605_0824/predictions.csv'
 file_path = os.path.join(my_path, )
 data = pd.read_csv(path)
 
@@ -22,7 +23,7 @@ for data_set in ['/ct_schema','/or_schema','/gl_schema']:
     filtered_data = data[(data['Epoch'] == epoch) & (data['Testset'] == data_set)]
     # Calculate the Average Blue Score (ABS)
     average_blue_score = filtered_data['Average Blue Score'].mean()
-    #print(f"Average Blue Score for {data_set} in epoch {epoch}: {average_blue_score}")
+    print(f"Average Blue Score for {data_set} in epoch {epoch}: {average_blue_score}")
     # find maximum and minimum values and get the argument index
     max_blue_score = filtered_data['Average Blue Score'].idxmax()
     min_blue_score = filtered_data['Average Blue Score'].idxmin()
@@ -44,11 +45,13 @@ if print_will_be_done:
         print(f"-------------------- Dataset {data['Testset'][min_max_scores[i][0]]} --------------------")
         print('-------------------- Max --------------------')
         print(f"Value of Blue Score: {data['Average Blue Score'][min_max_scores[i][0]]}")
+        print(f"The Levenshtein distance is: {data['Levenshtein'][min_max_scores[i][0]]}")
         print(f"Generated Text: {data['Generated Text'][min_max_scores[i][0]]}")
         print(f"Actual Text: {data['Actual Text'][min_max_scores[i][0]]}")
         print()
         print('-------------------- Min --------------------')
         print(f"Value of Blue Score: {data['Average Blue Score'][min_max_scores[i][1]]}")
+        print(f"The Levenshtein distance is: {data['Levenshtein'][min_max_scores[i][1]]}")
         print(f"Generated Text: {data['Generated Text'][min_max_scores[i][1]]}")
         print(f"Actual Text: {data['Actual Text'][min_max_scores[i][1]]}")
         print()
@@ -57,15 +60,17 @@ if print_will_be_done:
 # Print the generated text and the actual text
 # random sample
 epoch = 9
-filtered_data = data[(data['Epoch'] == epoch) & (data['Average Blue Score'] > 0.25)]
+filtered_data = data[(data['Epoch'] == epoch) & (data['Average Blue Score'] > 0)]
 # get a random index
 first_index = filtered_data.index[0]
 last_index = filtered_data.index[-1]
 i = random.randint(first_index, last_index)
+i = last_index -5
 
 print(f"-------------------- Dataset {data['Testset'][i]} {data['Epoch'][i]}--------------------")
-print('-------------------- Max --------------------')
+print('-------------------- Random --------------------')
 print(f"Value of Blue Score: {data['Average Blue Score'][i]}")
+print(f"The Levenshtein distance is: {data['Levenshtein'][i]}")
 print()
 print(f"Generated Text: {data['Generated Text'][i]}")
 print()

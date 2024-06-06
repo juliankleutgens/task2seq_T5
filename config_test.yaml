@@ -1,8 +1,9 @@
-max_samples: 2
+max_samples: 20000
 
 num_of_itr: 10000
 
 train_paths:
+  - '/Users/juliankleutgens/Downloads/reverse_engineering/generated_tasks'
   - '/Users/juliankleutgens/training_data'
 
 
@@ -10,6 +11,7 @@ test_paths:
   - '/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/ct_schema'
   - '/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/gl_schema'
   - '/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/or_schema'
+  - '/Users/juliankleutgens/PycharmProjects/arc-dsl-main/abstraction-and-reasoning-challenge/training'
 
 load_new_mappings: true
 type_of_mapping: 'val2alphabet'

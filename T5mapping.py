@@ -184,10 +184,11 @@ def alphabet_mapping(model_tokens):
     len(alphabet)
     for i in range(1, 27):
         for j in range(1, 27):
-            if chr(64 + i) + chr(64 + j) in model_tokens and len(alphabet) < 100:
-                alphabet.append(chr(64 + i) + chr(64 + j))
+            character = chr(64 + i) + chr(64 + j)
+            if character in model_tokens and character not in alphabet:
+                alphabet.append(character)
     dic = {}
-    for i in range(1,100):
+    for i in range(1,150):
         val = 'x'+str(i)
         dic[val] = alphabet[i-1]
     return dic
@@ -201,10 +202,10 @@ def function_is_token(token,model_tokens):
     token2 = token.lower()
     token3 = sentence_piece_char + token2
     # make only the first letter capital
-    token4 = token.capitalize()
+    token4 = token2.capitalize()
     token5 = sentence_piece_char + token4
     # make all the letters capital
-    token6 = token.upper()
+    token6 = token2.upper()
     token7 = sentence_piece_char + token6
     # look if it is in model tokens
     check_tokens = [token0, token1, token2, token3, token4, token5, token6, token7]
@@ -229,7 +230,7 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
     # Calculate the total number of tasks to be processed
     total_tasks = sum(len(df) for df in dfs)
 
-    # this is just for getting some strings solver.py in theory should be one enough
+    # this is just for getting some strings solver.py in theory should be one enough and add the tokens we have there to be mapped to the T5
     j = 0
     with tqdm(total=total_tasks, desc="Getting string of Solver.py") as pbar:
         for df in dfs:
@@ -282,7 +283,7 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
     if 'var_to_num' in extra_token:
         tokenstoMap = tokenstoMap + [str(i) for i in range(10)] + ['x']
     else:
-        tokenstoMap = tokenstoMap + ['x' + str(i) for i in range(1,100)]
+        tokenstoMap = tokenstoMap + ['x' + str(i) for i in range(1,150)]
 
     tokenstoMap = list(set(tokenstoMap))
     print('There are ', len(tokenstoMap), ' tokens to map')

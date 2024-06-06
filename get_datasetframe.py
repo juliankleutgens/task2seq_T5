@@ -6,6 +6,81 @@ from typing import List
 from constants import Task
 from utils import *
 import inflect
+
+def modify_variable_names(file_content):
+    # Function to increment variable names
+    def increment_var(match):
+        var = match.group(0)
+        num = int(var[1:])
+        return f'x{num + 1}'
+
+    # Replace variable names by incrementing their indices
+    modified_content = re.sub(r'\bx\d+\b', increment_var, file_content)
+
+    # Replace the last variable with 'O'
+    lines = modified_content.split('\n')
+    i = 0
+    while i < len(lines):
+        if 'return' in lines[i]:
+            # replace the variable xN with O
+            last_var = re.findall(r'\bx\d+\b', lines[i])[-1]
+            lines[i] = re.sub(rf'\b{last_var}\b', 'O', lines[i])
+            lines[i-1] = re.sub(rf'\b{last_var}\b', 'O', lines[i-1])
+        i += 1
+    # combine the lines
+    modified_content = '\n'.join(lines)
+
+    return modified_content
+
+
+
+
+def _read_reverse_engineering_json_files(path: str, max_sampels: int) -> List[Task]:
+    """
+    Given a directory path returns a list of arc
+    Tasks.
+    """
+    if path[:7] == "/Users/" or path[:6] == "/home/":
+        path_json = path
+    else:
+        path_json = os.getcwd() + path
+    print('we are at: ', path_json)
+    files = sorted(os.listdir(path_json))
+    tasks: List[Task] = []
+    solvers = []
+    #  read the solver.py file in a string
+    idx = path.find('generated_tasks')
+    path_solver = path[:idx] + 'verifiers.py'
+    solvers_file = read_solver_file(path_solver)
+    # switch the word verify with solver in solvers_file
+    solvers_file_buffer = solvers_file.replace('verify', 'solve')
+    solvers_file = modify_variable_names(solvers_file_buffer)
+    file_names = []
+    i = 0
+    for file in tqdm(files, desc="Decoding json files", leave=False):
+        if i == max_sampels:
+            break
+        try:
+            if not path[-5:] == '/test':
+                task = decode_json_task(os.path.join(path_json, file))
+                solver_name_for_task = file[:file.find('_')]
+                function = 'def solve_' + solver_name_for_task + '('
+                idx_start = solvers_file.find(function)
+                idx_end = solvers_file.find('def solve_', idx_start + 1)
+                solver = solvers_file[idx_start:idx_end]
+            else:
+                task = decode_json_task_test(os.path.join(path_json, file))
+                solver = ''
+
+        except Exception as e:
+            print(e)
+        else:
+            tasks.append(task)
+            solvers.append(solver)
+            file_names.append(file[:-5])
+        i += 1
+
+    return tasks, solvers, file_names
 def _read_arc_json_files(path: str, max_sampels: int) -> List[Task]:
     """
     Given a directory path returns a list of arc
@@ -143,12 +218,14 @@ def convert_task(task, sparse_type='repeated2words'):
 def load_data(path='ct_schema', maxsamples=-1, sparse_type='repeated2words'):
     dataset_dict = {'input': [], 'target': [], 'name': []}
     # Load the T5 tokenizer
-    if path.find('data_test') != -1:
-        maxsamples = 1000 # we have 3000 test samples
+    if path.find('data_test') != -1 and maxsamples == -1:
+        maxsamples = 500 # we have 3000 test samples
     if path.find('training_data') != -1:
         tasks, solvers, file_names = _read_generated_json_files_saperatly(path=path, max_sampels=maxsamples)
     elif path.find('abstraction-and-reasoning-challenge') != -1:
         tasks, solvers, file_names = _read_arc_json_files(path=path, max_sampels=maxsamples)
+    elif path.find('reverse_engineering') != -1:
+        tasks, solvers, file_names = _read_reverse_engineering_json_files(path=path, max_sampels=maxsamples)
     else:
         tasks, solvers, file_names = _read_generated_json_files(path=path, max_sampels=maxsamples)
 
@@ -158,13 +235,30 @@ def load_data(path='ct_schema', maxsamples=-1, sparse_type='repeated2words'):
 
     counter = 0
     for task, solver, name in tqdm(zip(tasks, solvers, file_names), desc="Pre Preprocessing step", leave=False):
+        # when there is a invalid task where index of the color is greater than 9 or less than 0, we skip it
+        if check_validity(task):
+            counter += 1
+            continue
         trimmed_func = solver
         task_all_pairs = convert_task(task, sparse_type=sparse_type)
         dataset_dict['input'].append(task_all_pairs)
         dataset_dict['target'].append(trimmed_func)
         dataset_dict['name'].append(name)
-
+    print(f"Number of invalid tasks which are cut out of the dataset: {counter}")
     return dataset_dict
+
+
+def check_validity(task):
+    for i in task:
+        input_ = np.array(i[0])
+        output_ = np.array(i[1])
+
+        if np.any(input_ > 9) or np.any(input_ < 0):
+            return True
+        if np.any(output_ > 9) or np.any(output_ < 0):
+            return True
+    return False
+
 
 def _read_generated_json_files_saperatly(path: str, max_sampels:int) -> List[Task]:
 
