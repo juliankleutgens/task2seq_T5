@@ -1,6 +1,6 @@
-max_samples: 20000
+max_samples: 2
 
-num_of_itr: 10000
+num_of_itr: 2
 
 train_paths:
   - '/Users/juliankleutgens/Downloads/reverse_engineering/generated_tasks'

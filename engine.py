@@ -204,7 +204,8 @@ def validate(epoch, tokenizer, model, device, loader, model_params, num_batches)
                     act_blue = act[:act.index('#EoF')+1]
                 else:
                     act_blue = act
-                score = sentence_bleu([act_blue], pred_blue, smoothing_function=SmoothingFunction().method1)
+                score = sentence_bleu([act_blue], pred_blue,
+                                      smoothing_function=SmoothingFunction().method1)
                 bleu_scores.append(score)
 
                 # Flatten the lists of tokens into strings for Levenshtein distance
@@ -216,10 +217,12 @@ def validate(epoch, tokenizer, model, device, loader, model_params, num_batches)
             avg_levenshtein_distance = sum(levenshtein_distances) / len(levenshtein_distances)
         else:
             avg_levenshtein_distance = 0
+            print(f"No levenshtein distances calculated, for the task {data['name']}")
         if len(bleu_scores) > 0:
             avg_bleu_score = sum(bleu_scores) / len(bleu_scores)
         else:
             avg_bleu_score = 0
+            print(f"No bleu scores calculated, for the task {data['name']}")
 
 
     return predictions, actuals, avg_bleu_score, bleu_scores, avg_levenshtein_distance, levenshtein_distances

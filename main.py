@@ -1,8 +1,8 @@
 """
 Finetune CodeT5+ models on any Seq2Seq LM tasks
 You can customize your own training data by following the HF dataset format to cache it to args.cache_data
-Author: Yue Wang
-Date: June 2023
+Author: Julian Kleutgens
+Date: June 2024
 """
 import shutil
 import pandas as pd

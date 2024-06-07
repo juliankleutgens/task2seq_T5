@@ -60,39 +60,56 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     """
     T5 trainer
     """
-    # Set random seeds and deterministic pytorch for reproducibility
-    # torch.manual_seed(model_params["SEED"]) # pytorch random seed
-    # np.random.seed(model_params["SEED"]) # numpy random seed
     torch.backends.cudnn.deterministic = True
-    # Setup logging
-    # logging.basicConfig(level=logging.INFO)
-    # logger = logging.getLogger(__name__)
-
     output_dir = cfg["output_dir"]
-
-#   print(f"the line torch.cuda.is_available() is {torch.cuda.is_available()}")
-#    print(torch.cuda.is_available())
-#    print(torch.cuda.device_count())
-#    print(torch.cuda.get_device_name(0))
-
-
-    # ------------------- load device -------------------
     model_params = cfg["model_params"]
     extra_tokens = cfg["extra_token"]
-    if cfg["device"] == "cuda":
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        if device.type == "cuda":
-            print(f"Using {torch.cuda.get_device_name(0)}")
+
+    # Print CUDA availability information
+    try:
+        print(f"The line torch.cuda.is_available() is {torch.cuda.is_available()}")
+        print(f"CUDA Available: {torch.cuda.is_available()}")
+        print(f"CUDA Device Count: {torch.cuda.device_count()}")
+        if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+            print(f"CUDA Device Name: {torch.cuda.get_device_name(0)}")
+    except Exception as e:
+        print(f"Error checking CUDA availability: {e}")
+
+    # tokenzier for encoding the text
+    tokenizer = T5Tokenizer.from_pretrained(model_params["MODEL"])
+    source_text="input"
+    target_text="target"
+
+    # Define the model and send it to the appropriate device
+    model = T5ForConditionalGeneration.from_pretrained(model_params["MODEL"])
+
+    # ------------------------------ load device ------------------------------
+    # Set the environment variable to use specified GPUs if device is set to cuda
+    # Set the environment variable to use only the n-th GPU
+    # n = "0" => use the first GPU
+    # n = "1" => use the second GPU
+    # n = "5,6" => use the 5th and 6th GPU
+    if cfg["device"] == "cuda" and "n_gpu" in cfg:
+        os.environ["CUDA_VISIBLE_DEVICES"] = cfg["n_gpu"]
+
+    if cfg["device"] == "cuda" and torch.cuda.is_available():
+        device = torch.device("cuda")
+        model = model.to(device)
+        # Check if we need to train on multiple GPUs
+        if cfg.get("train_on_multiple_gpus", False) and torch.cuda.device_count() > 1:
+            print(f"Using {torch.cuda.device_count()} GPUs")
+            model = torch.nn.DataParallel(model)
         else:
-            print(f"tried to use a GPU but it is not available: Using CPU for training")
-    elif cfg["device"] == "cpu":
-        device = torch.device("cpu")
-        print("Using CPU for model parallelism")
+            print("Using a single GPU")
     elif cfg["device"] == "mps":
         device = torch.device("mps")
         print("Using Multi-Process Service (MPS) for model parallelism")
+        model = model.to(device)
     else:
-        raise ValueError("Invalid device. Choose from 'cuda', 'cpu', 'mps'")
+        device = torch.device("cpu")
+        print("Using CPU for model parallelism")
+        model = model.to(device)
+
     print(f"------- Using device {device} -------")
     if torch.cuda.is_available():
         print(f"Using GPU: {torch.cuda.get_device_name(device)}")
@@ -107,15 +124,7 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     print(f"Loading {model_params['MODEL']}...")
 
 
-    # tokenzier for encoding the text
-    tokenizer = T5Tokenizer.from_pretrained(model_params["MODEL"])
-    source_text="input"
-    target_text="target"
 
-    # Defining the model. We are using t5-base model and added a Language model layer on top for generation of Summary.
-    # Further this model is sent to device (GPU/TPU) for using the hardware.
-    model = T5ForConditionalGeneration.from_pretrained(model_params["MODEL"])
-    model = model.to(device)
     # logging
     console.log(f"[Data]: Reading data...\n")
     wandb.log({"data_reading": True})

@@ -1,4 +1,4 @@
-max_samples: -1
+max_samples: 100
 
 num_of_itr: 15000
 
@@ -12,12 +12,14 @@ test_paths:
   - '/home/jkleutgens/data_test/ct_schema'
   - '/home/jkleutgens/data_test/gl_schema'
   - '/home/jkleutgens/data_test/or_schema'
-  - '/home/jkleutgens/arc-dsl-main'
+  - '/home/jkleutgens/arc-dsl-main/abstraction-and-reasoning-challenge/training'
 
 load_new_mappings: true
 type_of_mapping: 'x2y'
 
 device: 'cuda'
+train_on_multiple_gpus: false
+n_gpu: '5,6'
 
 sparse_type: 'repeated2words'
 

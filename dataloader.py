@@ -37,6 +37,7 @@ class DataSetClass(Dataset):
         return len(self.target_text)
 
     def __getitem__(self, index):
+        name = self.name[index]
         source_text = str(self.source_text[index])
         target_string = self.target_text[index]
 
@@ -77,5 +78,6 @@ class DataSetClass(Dataset):
             'source_ids': source_encoded['input_ids'].squeeze(),
             'source_mask': source_encoded['attention_mask'].squeeze(),
             'target_ids': target_ids,
-            'target_mask': target_mask
+            'target_mask': target_mask,
+            'name id': name
         }
