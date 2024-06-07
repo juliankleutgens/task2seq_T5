@@ -35,6 +35,7 @@ from rich.table import Table
 import wandb
 import Levenshtein
 from dataloader import DataSetClass
+from utils import *
 
 
 def train(epoch, tokenizer, model, device, loader, optimizer, console=Console(), cfg=None,
@@ -45,7 +46,7 @@ def train(epoch, tokenizer, model, device, loader, optimizer, console=Console(),
     """
     output_dir = cfg["output_dir"]
     test_paths = cfg["test_paths"]
-    model_params = cfg["model_params"]
+    train_on_multiple_gpus = cfg["train_on_multiple_gpus"]
 
     model.train()
     print(f"The model is on the device: {next(model.parameters()).device}")
@@ -66,6 +67,9 @@ def train(epoch, tokenizer, model, device, loader, optimizer, console=Console(),
 
         outputs = model(input_ids=ids, attention_mask=mask, decoder_input_ids=y_ids, labels=lm_labels)
         loss = outputs[0]
+        if loss.dim() != 0 & train_on_multiple_gpus:
+            # the loss must be a scaler
+            loss = loss.mean()
 
         if step % 10 == 0:
             #training_logger.add_row(str(epoch), str(step), str(loss.item()))
@@ -80,7 +84,12 @@ def train(epoch, tokenizer, model, device, loader, optimizer, console=Console(),
     # Saving the model after training
     path = os.path.join(output_dir, "model_files")
 
-    model.save_pretrained(path)
+    if train_on_multiple_gpus:
+        # Save the model correctly by accessing the underlying model from DataParallel
+        model_to_save = model.module if hasattr(model, 'module') else model
+        model_to_save.save_pretrained(path)
+    else:
+        model.save_pretrained(path)
     tokenizer.save_pretrained(path)
 
     # evaluating test dataset
@@ -98,7 +107,7 @@ def train(epoch, tokenizer, model, device, loader, optimizer, console=Console(),
         console.print(f"Validation for dataset {test_paths[i]}")
         predictions, actuals, avg_bleu_score, bleu_scores, avg_levenshtein_distance, levenshtein_distances= validate(epoch=epoch,
                                         tokenizer=tokenizer, model=model, device=device, loader=val_loader,
-                                        model_params=model_params, num_batches=cfg["model_params"]["VALID_BATCH_SIZE"])
+                                        cfg=cfg, num_batches=cfg["model_params"]["VALID_BATCH_SIZE"])
         final_df = pd.DataFrame({'Epoch':epoch,
                                  'Testset': test_set,
                                  'Average Blue Score':bleu_scores,
@@ -141,10 +150,14 @@ def train(epoch, tokenizer, model, device, loader, optimizer, console=Console(),
     return metrics_blue, metrics_leven
 
 
-def validate(epoch, tokenizer, model, device, loader, model_params, num_batches):
+def validate(epoch, tokenizer, model, device, loader, cfg, num_batches):
     """
     Function to evaluate model for predictions
     """
+    model_params = cfg["model_params"]
+    train_on_multiple_gpus = cfg["train_on_multiple_gpus"]
+    if train_on_multiple_gpus:
+        model = get_model(model)
     model.eval()
     predictions = []
     actuals = []

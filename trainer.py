@@ -26,7 +26,7 @@ from rich.console import Console
 from utils import *
 from torch import cuda
 from T5mapping import *
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader, Subset, DistributedSampler
 import random
 from rich import box
 from rich.console import Console
@@ -35,6 +35,7 @@ import wandb
 from dataloader import DataSetClass
 from engine import train, validate
 import matplotlib.pyplot as plt
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 
 def display_df(df):
@@ -89,16 +90,21 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     # n = "0" => use the first GPU
     # n = "1" => use the second GPU
     # n = "5,6" => use the 5th and 6th GPU
+    import torch.distributed as dist
+    dist.init_process_group(backend='nccl', init_method='env://')
+    print(f"Rank: {dist.get_rank()}")
+    device = torch.device(f'cuda:{dist.get_rank()}')
+
     if cfg["device"] == "cuda" and "n_gpu" in cfg:
         os.environ["CUDA_VISIBLE_DEVICES"] = cfg["n_gpu"]
 
     if cfg["device"] == "cuda" and torch.cuda.is_available():
-        device = torch.device("cuda")
+        #device = torch.device("cuda")
         model = model.to(device)
         # Check if we need to train on multiple GPUs
         if cfg.get("train_on_multiple_gpus", False) and torch.cuda.device_count() > 1:
             print(f"Using {torch.cuda.device_count()} GPUs")
-            model = torch.nn.DataParallel(model)
+            model = DDP(model, device_ids=[dist.get_rank()])
         else:
             print("Using a single GPU")
     elif cfg["device"] == "mps":
@@ -139,11 +145,20 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     training_set = DataSetClass(train_dataset, tokenizer, model_params["MAX_SOURCE_TEXT_LENGTH"],
                                     model_params["MAX_TARGET_TEXT_LENGTH"], source_text, target_text, extra_tokens)
     # Defining the parameters for creation of dataloaders
-    train_params = {
-        'batch_size': model_params["TRAIN_BATCH_SIZE"],
-        'shuffle': True,
-        'num_workers': 0
-    }
+    if cfg["train_on_multiple_gpus"]:
+        train_sampler = DistributedSampler(training_set)
+        train_params = {
+            'batch_size': model_params["TRAIN_BATCH_SIZE"],
+            'shuffle': False,
+            'num_workers': 0,
+            'sampler': train_sampler
+        }
+    else:
+        train_params = {
+            'batch_size': model_params["TRAIN_BATCH_SIZE"],
+            'shuffle': True,
+            'num_workers': 0
+        }
     # Creation of Dataloaders for testing and validation. This will be used down for training and validation stage for the model.
     training_loader = DataLoader(training_set, **train_params)
 
@@ -156,11 +171,23 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
         console.print(f"TEST Dataset: {val_dataset.shape}\n")
         val_set = DataSetClass(val_dataset, tokenizer, model_params["MAX_SOURCE_TEXT_LENGTH"],
                                    model_params["MAX_TARGET_TEXT_LENGTH"], source_text, target_text, extra_tokens)
-        val_params = {
-            'batch_size': model_params["VALID_BATCH_SIZE"],
-            'shuffle': False,
-            'num_workers': 0
-        }
+
+        if cfg["train_on_multiple_gpus"]:
+            validation_sampler = DistributedSampler(val_set)
+            val_params = {
+                'batch_size': model_params["VALID_BATCH_SIZE"],
+                'shuffle': False,
+                'num_workers': 0,
+                'sampler': validation_sampler
+            }
+        else:
+            val_params = {
+                'batch_size': model_params["VALID_BATCH_SIZE"],
+                'shuffle': False,
+                'num_workers': 0
+            }
+
+
         val_loader = DataLoader(val_set, **val_params)
         val_loader_list.append(val_loader)
 
@@ -213,4 +240,5 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     console.print(
         f"""[Validation] Generation on Validation data saved @ {os.path.join(output_dir, 'predictions.csv')}\n""")
     console.print(f"""[Logs] Logs saved @ {os.path.join(output_dir, 'logs.txt')}\n""")
+    dist.destroy_process_group()
 

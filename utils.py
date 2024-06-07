@@ -355,6 +355,12 @@ def convert2grid(sparse_task):
     task_dict = {'input': input_, 'output': output_}
     return task_dict
 
+def get_model(model):
+    """
+    Utility function to get the underlying model if wrapped in DataParallel.
+    """
+    return model.module if hasattr(model, 'module') else model
+
 
 if __name__ == "__main__":
     # Apply the reformatting function
