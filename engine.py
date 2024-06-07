@@ -212,9 +212,14 @@ def validate(epoch, tokenizer, model, device, loader, model_params, num_batches)
                 act_str = ''.join(act)
                 levenshtein_distance = Levenshtein.distance(pred_str, act_str)
                 levenshtein_distances.append(levenshtein_distance)
-
-        avg_levenshtein_distance = sum(levenshtein_distances) / len(levenshtein_distances)
-        avg_bleu_score = sum(bleu_scores) / len(bleu_scores)
+        if len(levenshtein_distances) > 0:
+            avg_levenshtein_distance = sum(levenshtein_distances) / len(levenshtein_distances)
+        else:
+            avg_levenshtein_distance = 0
+        if len(bleu_scores) > 0:
+            avg_bleu_score = sum(bleu_scores) / len(bleu_scores)
+        else:
+            avg_bleu_score = 0
 
 
     return predictions, actuals, avg_bleu_score, bleu_scores, avg_levenshtein_distance, levenshtein_distances

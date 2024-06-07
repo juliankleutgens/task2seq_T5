@@ -1,6 +1,6 @@
-max_samples: 15000
+max_samples: -1
 
-num_of_itr: -1
+num_of_itr: 15000
 
 train_paths:
   - '/home/jkleutgens/training_data'
