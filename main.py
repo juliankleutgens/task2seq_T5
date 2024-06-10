@@ -74,6 +74,17 @@ wandb.init(
     notes=wandb_cfg.get("wandb_notes", None),
     config=OmegaConf.to_container(cfg, resolve=True),
 )
+# ---------------- Log the model loading ----------------
+current_time = datetime.now().strftime("%Y%m%d_%H%M")  # Generate the current timestamp
+base_output_dir = cfg["output_dir"]
+new_output_dir = os.path.join(base_output_dir, f"output_{current_time}")
+os.makedirs(new_output_dir, exist_ok=True)
+cfg["output_dir"] = new_output_dir
+output_dir = cfg["output_dir"]
+# use cfg to save the config.yaml file
+with open(os.path.join(output_dir, "config_used.yaml"), "w") as file:
+    OmegaConf.save(cfg, file)
+
 
 # ------------------- get Training data -------------------
 # paths = ['/data/ct_schema' , '/data/gl_schema']#, '/data/or_schema', '/Users/juliankleutgens/training_data']
@@ -125,20 +136,10 @@ for i, df in enumerate(dfs_test_list):
 # define a rich console logger
 console = Console(record=True)
 
-
-# ---------------- Log the model loading ----------------
-current_time = datetime.now().strftime("%Y%m%d_%H%M")  # Generate the current timestamp
-base_output_dir = cfg["output_dir"]
-new_output_dir = os.path.join(base_output_dir, f"output_{current_time}")
-os.makedirs(new_output_dir, exist_ok=True)
-cfg["output_dir"] = new_output_dir
-output_dir = cfg["output_dir"]
 # copy past the dsl_token_mapping.json file and the config.yaml to the output directory
 shutil.copy("dsl_token_mappings_T5.json", output_dir)
 cfg["path_to_mapping"] = os.path.join(output_dir, "dsl_token_mappings_T5.json")
-# use cfg to save the config.yaml file
-with open(os.path.join(output_dir, "config_used.yaml"), "w") as file:
-    OmegaConf.save(cfg, file)
+
 print(f"New output directory created at: {new_output_dir}")
 print(f"Copied dsl_token_mappings_T5.json and config.yaml to: {output_dir}")
 
