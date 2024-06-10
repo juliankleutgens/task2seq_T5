@@ -65,7 +65,7 @@ filtered_data = data[(data['Epoch'] == epoch) & (data['Average Blue Score'] > 0)
 first_index = filtered_data.index[0]
 last_index = filtered_data.index[-1]
 i = random.randint(first_index, last_index)
-i = last_index -5
+#i = last_index -5
 
 print(f"-------------------- Dataset {data['Testset'][i]} {data['Epoch'][i]}--------------------")
 print('-------------------- Random --------------------')

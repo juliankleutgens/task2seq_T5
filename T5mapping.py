@@ -188,7 +188,7 @@ def alphabet_mapping(model_tokens):
             if character in model_tokens and character not in alphabet:
                 alphabet.append(character)
     dic = {}
-    for i in range(1,150):
+    for i in range(1,300):
         val = 'x'+str(i)
         dic[val] = alphabet[i-1]
     return dic
@@ -283,7 +283,7 @@ def save_new_mapping_from_df(dfs, extra_token = ['sym_aft_func', 'BoF', 'EoF', '
     if 'var_to_num' in extra_token:
         tokenstoMap = tokenstoMap + [str(i) for i in range(10)] + ['x']
     else:
-        tokenstoMap = tokenstoMap + ['x' + str(i) for i in range(1,150)]
+        tokenstoMap = tokenstoMap + ['x' + str(i) for i in range(1,300)]
 
     tokenstoMap = list(set(tokenstoMap))
     print('There are ', len(tokenstoMap), ' tokens to map')
@@ -346,108 +346,15 @@ def map_back(list_of_tokens):
     return original_tokens
 
 
-def reconstruct_code(token_list, name_idx='005t822n'):
-    tokens = token_list
-    output = []
-    current_function = []
-    current_variable_index = 1
-    function_count = 1
-    in_function = False
-    # search for #newline from the back of the list
-    last_idx_newline = len(tokens) - tokens[::-1].index('#newline') - 1
-    i = 0
-    while i < len(tokens):
-        token = tokens[i]
 
-        if token == '#BoF':
-
-            in_function = True
-            function_header = f"\n\ndef solve_{name_idx}(\n    I: Grid\n) -> Grid:"
-            current_function.append(function_header)
-
-            function_count += 1
-            i += 1  # go to next token after BoF
-
-        elif token == '#newline':
-            current_function.append('\n')  # Add newline
-
-            if i == last_idx_newline:
-                idx_end_line = len(tokens)
-            else:
-                idx_end_line = tokens.index('#newline', i + 1)
-                idx_of_end_func = tokens.index('#EoF', i + 1)
-                if idx_end_line > idx_of_end_func:
-                    idx_end_line = idx_of_end_func
-            idx_of_break = tokens.index(';', i+1, idx_end_line)
-            function_name = tokens[idx_of_break-1]
-
-            arguments = tokens[idx_of_break+1:idx_end_line]
-            args = []
-
-            # get all the arguments which are the inputs to the function
-
-            for1 = 0
-            while for1 < len(arguments):
-
-                if arguments[for1] == 'x':
-                    if arguments[for1+1] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                        args.extend([''.join(arguments[for1:for1+2])])
-                        for1 += 2
-                    elif arguments[for1+2] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                        args.extend([''.join(arguments[for1:for1+3])])
-                        for1 += 3
-                    elif arguments[for1+3] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                        args.extend([''.join(arguments[for1:for1+4])])
-                        for1 += 4
-                else:
-                    args.extend([arguments[for1]])
-                    for1 += 1
-
-            if tokens[idx_of_break-2] == 'O':
-                var_name = 'O'
-                current_function.append(f"    {var_name} = {function_name}({', '.join(args)})")
-            else:
-                var_name = ''.join(tokens[i+1:idx_of_break-1])
-                current_function.append(f"    {var_name} = {function_name}({', '.join(args)})")
-
-            i = idx_end_line  # Move index to next relevant token
-
-        elif token == '#EoF':
-            current_function.append("\n    return O")
-            output.append(''.join(current_function))
-            current_function = []
-            in_function = False
-            i += 1  # Move to next token
-
-        else:
-            i += 1  # Skip unrecognized tokens or handle other cases if needed
-
-    if current_function:
-        output.append(''.join(current_function))
-
-    # Return a single string that concatenates all function definitions
-    return ''.join(output)
-
-
-def get_best_match(token, all_tokens, used_matches, vectorizer, vectors):
-    token_vec = vectorizer.transform([token]).toarray()
-    cosine_similarities = cosine_similarity(token_vec, vectors).flatten()
-
-    matches = [(all_tokens[i], cosine_similarities[i]) for i in range(len(all_tokens))]
-    matches.sort(key=lambda x: x[1], reverse=True)
-
-    for match, score in matches:
-        if match not in used_matches:
-            return match, score
-    return None, None
 
 if __name__ == "__main__":
     # get the file content and the solver.py file
-    file_content = read_solver_file()
+    file_content = read_solver_file('/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/ct_schema')
 
     #all_functions_string = "\n".join(all_rewritten_functions.values())
     #extra_token = ['BoF','prev','sym_aft_func','var_to_num']
-    extra_token = ['sym_aft_func', 'BoF', 'EoF', 'var_to_num']
+    extra_token = ['sym_aft_func', 'EoF']
     string_print, list_of_tokens = reformat_dsl_code(file_content,  extra_token=extra_token)
 
 
@@ -456,11 +363,19 @@ if __name__ == "__main__":
 
     T5_tokens_text, dsl_token_mappings = map_to_t5_token(file_content, extra_token=extra_token, tokenizer=tokenizer, loading_new_mappings=False)
     original_tokens = map_back(T5_tokens_text)
-    print("---------- Original Tokens ----------")
-    print(original_tokens[:200])
-    recon_code = reconstruct_code(original_tokens, name_idx='005t822n')
+    #  get one function, find #EoF
+    example_function = original_tokens[0:original_tokens.index('#EoF')+4]
+    # add noise to the function
+    random = np.random.randint(0, len(example_function))
 
-    print(file_content[:2000])
+    # add the noise token but do not change the tokens add it only in the sequence
+    example_function.insert(random, '!NOISE!')
+
+
+    print("---------- Original Tokens ----------")
+    print(example_function)
+    recon_code = reconstruct_code(example_function, name_idx='005t822n')
+
     print("---------- Reconstructed Code ----------")
-    print(recon_code[:2000])
+    print(recon_code)
     print()

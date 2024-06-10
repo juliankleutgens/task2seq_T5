@@ -26,14 +26,14 @@ from rich.console import Console
 from utils import *
 from torch import cuda
 from T5mapping import *
-from torch.utils.data import DataLoader, Subset, DistributedSampler
+from torch.utils.data import DataLoader, Subset
 import random
 from rich import box
 from rich.console import Console
 from rich.table import Table
 import wandb
 from dataloader import DataSetClass
-from engine import train, validate
+from engine import train_and_validate, validate
 import matplotlib.pyplot as plt
 from torch.nn.parallel import DistributedDataParallel as DDP
 
@@ -79,8 +79,7 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
 
     # tokenzier for encoding the text
     tokenizer = T5Tokenizer.from_pretrained(model_params["MODEL"])
-    source_text="input"
-    target_text="target"
+
 
     # Define the model and send it to the appropriate device
     model = T5ForConditionalGeneration.from_pretrained(model_params["MODEL"])
@@ -134,14 +133,12 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     wandb.log({"data_reading": True})
 
     # ----------------- Testing dataloader -----------------
-    dataframe_train = dataframe_train[[source_text, target_text, 'name']]
-    # Assuming dataframe_train and dataframe_test are already defined
     train_dataset = dataframe_train.reset_index(drop=True)
     # Logging
     console.print(f"TRAIN Dataset: {train_dataset.shape}")
     # Creating the Training and Validation dataset for further creation of Dataloader
     training_set = DataSetClass(train_dataset, tokenizer, model_params["MAX_SOURCE_TEXT_LENGTH"],
-                                    model_params["MAX_TARGET_TEXT_LENGTH"], source_text, target_text, extra_tokens)
+                                    model_params["MAX_TARGET_TEXT_LENGTH"], extra_tokens)
     # Defining the parameters for creation of dataloaders
 
     train_params = {
@@ -156,11 +153,10 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     # ----------------- Validation dataloader -----------------
     val_loader_list = []
     for i, dataframe_test in enumerate(dataframe_test_list):
-        dataframe_test = dataframe_test[[source_text, target_text, 'name']]
         val_dataset = dataframe_test.reset_index(drop=True)
         console.print(f"TEST Dataset: {val_dataset.shape}\n")
         val_set = DataSetClass(val_dataset, tokenizer, model_params["MAX_SOURCE_TEXT_LENGTH"],
-                                   model_params["MAX_TARGET_TEXT_LENGTH"], source_text, target_text, extra_tokens)
+                                   model_params["MAX_TARGET_TEXT_LENGTH"], extra_tokens)
 
 
         val_params = {
@@ -178,23 +174,43 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
 
     # Training loop
     console.log(f'[Initiating Fine Tuning]...\n')
-
+    first_epoch = True
     # ------------------- Training and Validation Loop -------------------
-    for epoch in range(model_params["TRAIN_EPOCHS"]):
-        metrics_blue, metrics_leven = train(epoch, tokenizer=tokenizer, model=model, device=device, loader=training_loader, optimizer=optimizer,
-            console=console, cfg=cfg, val_loader_list=val_loader_list)
+    for epoch in range(1,model_params["TRAIN_EPOCHS"]+1):
+        metrics_blue, metrics_leven, accuracy = train_and_validate(epoch, tokenizer=tokenizer, model=model, device=device,
+                                        loader=training_loader, optimizer=optimizer,
+                                        console=console, cfg=cfg, val_loader_list=val_loader_list)
 
-        # --------- save the data to a plot file ---------
-        # Convert metrics to DataFrame
-        df_metrics_blue = pd.DataFrame([metrics_blue])
-        df_metrics_leven = pd.DataFrame([metrics_leven])
+        if epoch % cfg["model_params"]["VAL_EPOCHS"] == 0:
 
-        if epoch == 0:
-            all_metrics_blue = df_metrics_blue
-            all_metrics_leven = df_metrics_leven
-        else:
-            all_metrics_blue = pd.concat([all_metrics_blue, df_metrics_blue], ignore_index=True)
-            all_metrics_leven = pd.concat([all_metrics_leven, df_metrics_leven], ignore_index=True)
+            # --------- save the data to a plot file ---------
+            # Convert metrics to DataFrame
+            df_metrics_blue = pd.DataFrame([metrics_blue])
+            df_metrics_leven = pd.DataFrame([metrics_leven])
+            df_accuracy = pd.DataFrame([accuracy])
+
+            if first_epoch:
+                all_metrics_blue = df_metrics_blue
+                all_metrics_leven = df_metrics_leven
+                all_accuracy = df_accuracy
+                first_epoch = False
+            else:
+                all_metrics_blue = pd.concat([all_metrics_blue, df_metrics_blue], ignore_index=True)
+                all_metrics_leven = pd.concat([all_metrics_leven, df_metrics_leven], ignore_index=True)
+                all_accuracy = pd.concat([all_accuracy, df_accuracy], ignore_index=True)
+
+
+
+
+    console.save_text(os.path.join(output_dir, 'logs.txt'))
+
+    console.log(f"[Validation Completed.]\n")
+    console.print(f"""[Model] Model saved @ {os.path.join(output_dir, "model_files")}\n""")
+    console.print(
+        f"""[Validation] Generation on Validation data saved @ {os.path.join(output_dir, 'predictions.csv')}\n""")
+    console.print(f"""[Logs] Logs saved @ {os.path.join(output_dir, 'logs.txt')}\n""")
+
+
 
     # Plot the metrics for the training
     def plot_metrics(all_metrics, metric_name, output_dir):
@@ -214,13 +230,5 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     console.log(f"[Plotting Metrics]...\n")
     plot_metrics(all_metrics_blue, 'BLEU Score', output_dir)
     plot_metrics(all_metrics_leven, 'Levenshtein Distance', output_dir)
-
-    console.save_text(os.path.join(output_dir, 'logs.txt'))
-
-    console.log(f"[Validation Completed.]\n")
-    console.print(f"""[Model] Model saved @ {os.path.join(output_dir, "model_files")}\n""")
-    console.print(
-        f"""[Validation] Generation on Validation data saved @ {os.path.join(output_dir, 'predictions.csv')}\n""")
-    console.print(f"""[Logs] Logs saved @ {os.path.join(output_dir, 'logs.txt')}\n""")
-    dist.destroy_process_group()
+    plot_metrics(all_accuracy, 'Accuracy', output_dir)
 

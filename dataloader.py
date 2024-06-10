@@ -23,14 +23,15 @@ class DataSetClass(Dataset):
     Creating a custom dataset for reading the dataset and
     loading it into the dataloader to pass it to the neural network for finetuning the model.
     """
-    def __init__(self, dataframe, tokenizer, source_len, target_len, source_text, target, extra_tokens):
+    def __init__(self, dataframe, tokenizer, source_len, target_len, extra_tokens):
         self.tokenizer = tokenizer
         self.data = dataframe
         self.source_len = source_len
         self.target_len = target_len
-        self.target_text = self.data[target]
-        self.source_text = self.data[source_text]
+        self.target_text = self.data['target']
+        self.source_text = self.data['input']
         self.name = self.data['name']
+        self.local_path = self.data['local_path']
         self.extra_token = extra_tokens
 
     def __len__(self):
@@ -38,6 +39,7 @@ class DataSetClass(Dataset):
 
     def __getitem__(self, index):
         name = self.name[index]
+        path = self.local_path[index]
         source_text = str(self.source_text[index])
         target_string = self.target_text[index]
 
@@ -50,7 +52,8 @@ class DataSetClass(Dataset):
             padding='max_length',
             truncation=True,
             return_tensors='pt')
-
+        # convert back
+        #source_decode = self.tokenizer.convert_ids_to_tokens(source_encoded['input_ids'].squeeze())
         #print("tokenized_task_sample_length",len(self.tokenizer.tokenize(source_text)))
         #print("encoded_task_sample_length", source_encoded['input_ids'].shape[1])
 
@@ -79,5 +82,6 @@ class DataSetClass(Dataset):
             'source_mask': source_encoded['attention_mask'].squeeze(),
             'target_ids': target_ids,
             'target_mask': target_mask,
-            'name id': name
+            'name': name,
+            'local_path': path,
         }

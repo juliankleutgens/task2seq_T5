@@ -15,6 +15,7 @@ from numpy.typing import NDArray
 import numpy as np
 import os
 import dsl
+
 from tqdm import tqdm
 from transformers import T5Tokenizer
 
@@ -297,7 +298,14 @@ def convert2sparse_repeated_numbers(task):
     return sparse_task
 
 
-
+def load_token_mappings(filename="dsl_token_mappings_T5.json"):
+    """Loads token mappings from a JSON file, handling potential errors."""
+    try:
+        with open(filename, "r") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        print("No existing token mappings found.")
+        return None
 
 def convert2sparse(task):
     def fromTuple(tuple_):
@@ -362,9 +370,168 @@ def get_model(model):
     return model.module if hasattr(model, 'module') else model
 
 
+def reconstruct_code(token_list, name_idx='005t822n'):
+    tokens = token_list
+    output = []
+    current_function = []
+    # search for #newline from the back of the list
+    last_idx_newline = len(tokens) - tokens[::-1].index('#newline') - 1
+    i = 0
+
+    # make the function header with the name of the function
+    import_statement = "from dsl import * \nfrom constants import *\n"
+    output.append(import_statement)
+    function_header = f"\n\ndef solve_{name_idx}(I: Grid) -> Grid:"
+    current_function.append(function_header)
+    while i < len(tokens):
+        token = tokens[i]
+
+        if token == '#newline' or i==0 or token == '<pad>':
+            try:
+                current_function.append('\n')  # Add newline
+
+                # get the indexes of the beginning and the end of the line
+                if i == last_idx_newline:
+                    # for last line in the code, it is only one time true in the end
+                    idx_end_line = tokens.index('#EoF', i + 1)
+                else:
+                    idx_end_line = tokens.index('#newline', i + 1)
+                    if '#EoF' in tokens[i + 1:idx_end_line]:
+                        idx_of_end_func = tokens.index('#EoF', i + 1)
+                        if idx_end_line > idx_of_end_func:
+                            idx_end_line = idx_of_end_func
+
+                # Rebuild the line
+                code_line = rebuild_the_line(tokens, i, idx_end_line)
+                current_function.extend(code_line)
+                i = idx_end_line  # Move index to next relevant token
+            except:
+                current_function.append('\n')
+                current_function.append('    # there was an error in the code in this line')
+                i += 1
+        elif token == '#EoF':
+            current_function.append("\n    return O")
+            output.append(''.join(current_function))
+            current_function = []
+            break # Move to next token
+
+        else:
+            current_function.append(f"\n    # generated {token}")
+            i += 1  # Skip unrecognized tokens or handle other cases if needed
+
+    if current_function:
+        output.append(''.join(current_function))
+
+    # Return a single string that concatenates all function definitions
+    return ''.join(output)
+
+
+def rebuild_the_line(tokens, idx_beginning, idx_end_line):
+    # load mapping
+    dsl_token_mappings = load_token_mappings(filename="dsl_token_mappings_T5.json")
+    idx_of_break = tokens.index(';', idx_beginning + 1, idx_end_line)
+    function_name = tokens[idx_of_break - 1]
+    arguments = tokens[idx_of_break + 1:idx_end_line]
+    args = []
+    unrecognized_tokens = []
+    # get all the arguments which are the inputs to the function
+    for1 = 0
+    # there is a unrecognized tokens
+    while for1 < len(arguments):
+        if not arguments[for1] in dsl_token_mappings:
+            unrecognized_tokens.append(arguments[for1])
+            for1 += 1
+        elif arguments[for1] == 'x':
+            if arguments[for1 + 1] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
+                args.extend([''.join(arguments[for1:for1 + 2])])
+                for1 += 2
+            elif arguments[for1 + 2] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
+                args.extend([''.join(arguments[for1:for1 + 3])])
+                for1 += 3
+            elif arguments[for1 + 3] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
+                args.extend([''.join(arguments[for1:for1 + 4])])
+                for1 += 4
+        else:
+            args.extend([arguments[for1]])
+            for1 += 1
+
+    if tokens[idx_of_break - 2] == 'O':
+        var_name = 'O'
+        code_line = f"    {var_name} = {function_name}({', '.join(args)})"
+    else:
+        var_name = ''.join(tokens[idx_beginning + 1:idx_of_break - 1])
+        code_line = f"    {var_name} = {function_name}({', '.join(args)})"
+    if unrecognized_tokens:
+        comment = ', '.join(unrecognized_tokens)
+        code_line = code_line + f"   # there was an unrecognized token in the code: " + comment
+    return code_line
+
+
+
+def reconstruct_and_execute_code(tokens, path, name):
+    """Executes Python code containing a solver function against a JSON task file.
+
+    Args:
+        code (str): The Python code to execute.
+        path (str): Path to the JSON task file.
+        name (str): Name of the solver function within the code (e.g., "solve_task1").
+
+    Returns:
+        dict: A dictionary containing the number of tasks solved correctly,
+              and flags indicating various states of execution.
+    """
+    solvers_module = {}
+    result = {
+        'code': '',
+        'accuracy': 0,
+        'code_reconstructed': False,
+        'code_initializable': False,
+        'output_generated': False,
+        'error_message': ''
+    }
+    try:
+        code = reconstruct_code(tokens, name)
+        result['code_reconstructed'] = True
+        result['code'] = code
+    except Exception as e:
+        result['error_message'] += f'Error reconstructing code: {e}. '
+        return result
+    task = decode_json_task(path)
+
+    try:
+        exec(code, solvers_module)
+        solver = solvers_module.get(f'solve_{name}')
+        if not solver:
+            result['error_message'] += f'Function solve_{name} not found in solvers_module. '
+            return result
+        result['code_initializable'] = True
+    except Exception as e:
+        result['error_message'] += f'Error initializing code: {e}. '
+        return result
+
+    try:
+        for i, ex in enumerate(task, start=1):
+            input_data = tuple(map(tuple, ex[0]))  # Assume first element is input
+            output_data = tuple(map(tuple, ex[1]))  # Assume second element is output
+
+            try:
+                result['output_generated'] = True
+                if solver(input_data) == output_data:
+                    result['accuracy'] += 1
+            except Exception as e:
+                result['error_message'] += f'Error solving task {i}: {e}. '
+                result['output_generated'] = False
+
+    except Exception as e:
+        result['error_message'] += f'Unexpected error during task execution: {e}. '
+
+    result['accuracy'] = result['accuracy'] / len(task)
+    return result
+
+
 if __name__ == "__main__":
     # Apply the reformatting function
-    file_content = read_solver_file()
+    file_content = read_solver_file('/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/ct_schema')
     string_print, list_of_tokens = reformat_dsl_code(file_content,  extra_token = ['underscore', 'prev', 'sym_aft_func', 'var_to_num', 'BoF'])
     print(string_print)
     print(Counter(list_of_tokens))
