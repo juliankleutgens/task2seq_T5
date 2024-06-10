@@ -172,6 +172,7 @@ def validate(epoch, tokenizer, model, device, loader, cfg, num_batches, dataset_
     """
     model_params = cfg["model_params"]
     train_on_multiple_gpus = cfg["train_on_multiple_gpus"]
+    fist_epoch
     if train_on_multiple_gpus:
         model = get_model(model)
     model.eval()
@@ -181,6 +182,11 @@ def validate(epoch, tokenizer, model, device, loader, cfg, num_batches, dataset_
     levenshtein_distances = []
     names = []
     codes = []
+    accuracies = []
+    codes_reconstructed = []
+    codes_initializable = []
+    outputs_generated = []
+    errors = []
     iteration = 0
 
     with torch.no_grad():
@@ -205,12 +211,7 @@ def validate(epoch, tokenizer, model, device, loader, cfg, num_batches, dataset_
 
             preds = []
             j = 0
-            codes = []
-            accuracies = []
-            codes_reconstructed = []
-            codes_initializable = []
-            outputs_generated = []
-            errors = []
+
 
             for gen_id in generated_ids:
                 one_sample_pred = []
