@@ -65,7 +65,6 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
         ids = data['source_ids'].to(device, dtype=torch.long)
         mask = data['source_mask'].to(device, dtype=torch.long)
         percent_of_seen_pairs += data["percent_of_seen_pairs"].to(torch.float).sum()
-        print(data["percent_of_seen_pairs"].to(torch.float).sum())
 
 
         outputs = model(input_ids=ids, attention_mask=mask, decoder_input_ids=y_ids, labels=lm_labels)

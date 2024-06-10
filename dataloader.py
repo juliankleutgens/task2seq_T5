@@ -57,17 +57,20 @@ class DataSetClass(Dataset):
         # Check if truncation occurred
         tokens = self.tokenizer.tokenize(source_text)
         if len(tokens) > self.source_len:
-            source_decode = self.tokenizer.convert_ids_to_tokens(source_encoded['input_ids'].squeeze())
-            source_decode_reversed = list(reversed(source_decode))
-            last_occurrence_index = len(source_decode) - 1 - source_decode_reversed.index('▁input')
-            source_cut_off = source_decode[:last_occurrence_index]
-            source_encoded = self.tokenizer.encode_plus(
-                source_cut_off,
-                max_length=self.source_len,
-                padding='max_length',
-                truncation=True,
-                return_tensors='pt')
-            percent_of_the_seen_pairs = source_cut_off.count('▁input')/tokens.count('▁input')
+            try:
+                source_decode = self.tokenizer.convert_ids_to_tokens(source_encoded['input_ids'].squeeze())
+                source_decode_reversed = list(reversed(source_decode))
+                last_occurrence_index = len(source_decode) - 1 - source_decode_reversed.index('▁input')
+                source_cut_off = source_decode[:last_occurrence_index]
+                source_encoded = self.tokenizer.encode_plus(
+                    source_cut_off,
+                    max_length=self.source_len,
+                    padding='max_length',
+                    truncation=True,
+                    return_tensors='pt')
+                percent_of_the_seen_pairs = source_cut_off.count('▁input')/tokens.count('▁input')
+            except:
+                percent_of_the_seen_pairs = 1
         else:
             percent_of_the_seen_pairs = 1
 
