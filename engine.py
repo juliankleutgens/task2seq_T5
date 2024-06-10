@@ -172,7 +172,7 @@ def validate(epoch, tokenizer, model, device, loader, cfg, num_batches, dataset_
     """
     model_params = cfg["model_params"]
     train_on_multiple_gpus = cfg["train_on_multiple_gpus"]
-    fist_epoch
+    first_time_validation = epoch == cfg["model_params"]["VAL_EPOCHS"]
     if train_on_multiple_gpus:
         model = get_model(model)
     model.eval()
@@ -254,7 +254,7 @@ def validate(epoch, tokenizer, model, device, loader, cfg, num_batches, dataset_
 
                 our_token_sample = map_back(one_sample_target)
                 target.append(our_token_sample)
-                if epoch == 0:
+                if first_time_validation:
                     try:
                         r = reconstruct_and_execute_code(our_token_sample, path[j], name[j])
                         if not r['accuracy'] == 1:
