@@ -10,9 +10,10 @@ import numpy as np
 from utils import *
 from Levenshtein import distance as levenshtein_distance
 
-def map_to_t5_token(string_solver,extra_token = ['sym_aft_func', 'BoF', 'EoF'], tokenizer=T5Tokenizer.from_pretrained('t5-small'), loading_new_mappings = True):
+def map_to_t5_token(string_solver,extra_token = ['sym_aft_func', 'BoF', 'EoF'], tokenizer=T5Tokenizer.from_pretrained('t5-small')
+                    , loading_new_mappings=True, path_to_mapping='dsl_token_mappings_T5.json'):
     string_print, list_of_tokens = reformat_dsl_code(string_solver, extra_token=extra_token)
-    dsl_token_mappings = load_token_mappings(filename="dsl_token_mappings_T5.json")
+    dsl_token_mappings = load_token_mappings(filename=path_to_mapping)
     if list_of_tokens is None:
         error_message = "The list of tokens is empty. Please check the reformat_dsl_code function."
         return error_message
@@ -331,8 +332,8 @@ def reconstruct_dsl_code(reformatted_code):
 
     return '\n'.join(original_code)
 
-def map_back(list_of_tokens):
-    T5_map = load_token_mappings(filename="dsl_token_mappings_T5.json")
+def map_back(list_of_tokens, filename="dsl_token_mappings_T5.json"):
+    T5_map = load_token_mappings(filename=filename)
     # use the dictionary to map back the tokens
     # switch the key and values
     T5_map = {v: k for k, v in T5_map.items()}

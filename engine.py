@@ -218,10 +218,10 @@ def validate(epoch, tokenizer, model, device, loader, cfg, num_batches, dataset_
                 for _id in gen_id:
                     token = tokenizer.convert_ids_to_tokens(int(_id))
                     one_sample_pred.append(token)
-                our_token_sample = map_back(one_sample_pred)
+                our_token_sample = map_back(one_sample_pred, cfg["path_to_mapping"])
                 preds.append(our_token_sample)
                 try:
-                    result = reconstruct_and_execute_code(our_token_sample, path[j], name[j])
+                    result = reconstruct_and_execute_code(our_token_sample, path[j], name[j], path_to_mapping=cfg["path_to_mapping"])
                     # concatenate the results
 
                 except Exception as e:
@@ -252,11 +252,11 @@ def validate(epoch, tokenizer, model, device, loader, cfg, num_batches, dataset_
                     token = tokenizer.convert_ids_to_tokens(int(_id))
                     one_sample_target.append(token)
 
-                our_token_sample = map_back(one_sample_target)
+                our_token_sample = map_back(one_sample_target, cfg["path_to_mapping"])
                 target.append(our_token_sample)
                 if first_time_validation:
                     try:
-                        r = reconstruct_and_execute_code(our_token_sample, path[j], name[j])
+                        r = reconstruct_and_execute_code(our_token_sample, path[j], name[j], path_to_mapping=cfg["path_to_mapping"])
                         if not r['accuracy'] == 1:
                             print(f"The ground true code for {name[j]} is not correct!!!")
                     except Exception as e:

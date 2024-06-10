@@ -87,14 +87,12 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
     # Set the environment variable to use specified GPUs if device is set to cuda
     # Set the environment variable to use only the n-th GPU
     # n = "0" => use the first GPU
-    # n = "1" => use the second GPU
-    # n = "5,6" => use the 5th and 6th GPU
-
-
+    # n = 1 => use the second GPU
     if cfg["device"] == "cuda" and "n_gpu" in cfg:
         device = torch.device(f"cuda:{str(cfg['n_gpu'])}")
     else:
         device = torch.device("cuda")
+
 
     if cfg["device"] == "cuda" and torch.cuda.is_available():
         model = model.to(device)
@@ -138,7 +136,7 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
     console.print(f"TRAIN Dataset: {train_dataset.shape}")
     # Creating the Training and Validation dataset for further creation of Dataloader
     training_set = DataSetClass(train_dataset, tokenizer, model_params["MAX_SOURCE_TEXT_LENGTH"],
-                                    model_params["MAX_TARGET_TEXT_LENGTH"], extra_tokens)
+                                    model_params["MAX_TARGET_TEXT_LENGTH"], extra_tokens, cfg=cfg)
     # Defining the parameters for creation of dataloaders
 
     train_params = {
@@ -156,7 +154,7 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
         val_dataset = dataframe_test.reset_index(drop=True)
         console.print(f"TEST Dataset: {val_dataset.shape}\n")
         val_set = DataSetClass(val_dataset, tokenizer, model_params["MAX_SOURCE_TEXT_LENGTH"],
-                                   model_params["MAX_TARGET_TEXT_LENGTH"], extra_tokens)
+                                   model_params["MAX_TARGET_TEXT_LENGTH"], extra_tokens,cfg=cfg)
 
 
         val_params = {

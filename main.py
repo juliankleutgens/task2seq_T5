@@ -90,8 +90,9 @@ print("Training Data loaded successfully")
 # paths_test = ['/data_test/ct_schema','/data_test/gl_schema']
 paths_test = test_paths
 dfs_test_list = []
+max_test_samples = cfg["test_samples"]
 for path in paths_test:
-    df = load_data(path, maxsamples=max_samples, sparse_type=sparse_type)
+    df = load_data(path, maxsamples=max_test_samples, sparse_type=sparse_type)
     dfs_test_list.append(df)
 print("Testing Data loaded successfully")
 # ------------------- get new mapping if necessary -------------------
@@ -134,6 +135,7 @@ cfg["output_dir"] = new_output_dir
 output_dir = cfg["output_dir"]
 # copy past the dsl_token_mapping.json file and the config.yaml to the output directory
 shutil.copy("dsl_token_mappings_T5.json", output_dir)
+cfg["path_to_mapping"] = os.path.join(output_dir, "dsl_token_mappings_T5.json")
 # use cfg to save the config.yaml file
 with open(os.path.join(output_dir, "config_used.yaml"), "w") as file:
     OmegaConf.save(cfg, file)

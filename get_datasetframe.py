@@ -245,7 +245,7 @@ def load_data(path='ct_schema', maxsamples=-1, sparse_type='repeated2words'):
     dataset_name = dataset_name_match.group() if dataset_name_match else None
 
     # Adjust maxsamples based on dataset
-    maxsamples_test = 500 if maxsamples == -1 else maxsamples
+    maxsamples_test = -1 if maxsamples == -1 else maxsamples
     maxsamples_adjustments = {
         'data_test': maxsamples_test,
         'training_data': maxsamples,

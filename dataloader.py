@@ -23,7 +23,7 @@ class DataSetClass(Dataset):
     Creating a custom dataset for reading the dataset and
     loading it into the dataloader to pass it to the neural network for finetuning the model.
     """
-    def __init__(self, dataframe, tokenizer, source_len, target_len, extra_tokens):
+    def __init__(self, dataframe, tokenizer, source_len, target_len, extra_tokens, cfg):
         self.tokenizer = tokenizer
         self.data = dataframe
         self.source_len = source_len
@@ -33,6 +33,7 @@ class DataSetClass(Dataset):
         self.name = self.data['name']
         self.local_path = self.data['local_path']
         self.extra_token = extra_tokens
+        self.cfg = cfg
 
     def __len__(self):
         return len(self.target_text)
@@ -59,7 +60,8 @@ class DataSetClass(Dataset):
 
         # -------------- tokenizes target ------------
         # so convert it to embedding and tensor
-        target_token,_ = map_to_t5_token(target_string,extra_token=self.extra_token, tokenizer=self.tokenizer, loading_new_mappings=False)
+        target_token,_ = map_to_t5_token(target_string,extra_token=self.extra_token, tokenizer=self.tokenizer,
+                                         loading_new_mappings=False, path_to_mapping=self.cfg['path_to_mapping'])
         target_token_ids = self.tokenizer.convert_tokens_to_ids(target_token)
 
         # print(f"The length of the tokenized solver.py functions sample is: {len(target_token_ids)}")

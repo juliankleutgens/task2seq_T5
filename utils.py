@@ -298,7 +298,7 @@ def convert2sparse_repeated_numbers(task):
     return sparse_task
 
 
-def load_token_mappings(filename="dsl_token_mappings_T5.json"):
+def load_token_mappings_utils(filename="dsl_token_mappings_T5.json"):
     """Loads token mappings from a JSON file, handling potential errors."""
     try:
         with open(filename, "r") as f:
@@ -370,7 +370,7 @@ def get_model(model):
     return model.module if hasattr(model, 'module') else model
 
 
-def reconstruct_code(token_list, name_idx='005t822n'):
+def reconstruct_code(token_list, name_idx='005t822n', path_to_mapping='dsl_token_mappings_T5.json'):
     tokens = token_list
     output = []
     current_function = []
@@ -402,7 +402,7 @@ def reconstruct_code(token_list, name_idx='005t822n'):
                             idx_end_line = idx_of_end_func
 
                 # Rebuild the line
-                code_line = rebuild_the_line(tokens, i, idx_end_line)
+                code_line = rebuild_the_line(tokens, i, idx_end_line, path_to_mapping)
                 current_function.extend(code_line)
                 i = idx_end_line  # Move index to next relevant token
             except:
@@ -426,9 +426,9 @@ def reconstruct_code(token_list, name_idx='005t822n'):
     return ''.join(output)
 
 
-def rebuild_the_line(tokens, idx_beginning, idx_end_line):
+def rebuild_the_line(tokens, idx_beginning, idx_end_line, path_to_mapping):
     # load mapping
-    dsl_token_mappings = load_token_mappings(filename="dsl_token_mappings_T5.json")
+    dsl_token_mappings = load_token_mappings_utils(filename=path_to_mapping)
     idx_of_break = tokens.index(';', idx_beginning + 1, idx_end_line)
     function_name = tokens[idx_of_break - 1]
     arguments = tokens[idx_of_break + 1:idx_end_line]
@@ -468,7 +468,7 @@ def rebuild_the_line(tokens, idx_beginning, idx_end_line):
 
 
 
-def reconstruct_and_execute_code(tokens, path, name):
+def reconstruct_and_execute_code(tokens, path, name, path_to_mapping):
     """Executes Python code containing a solver function against a JSON task file.
 
     Args:
@@ -490,7 +490,7 @@ def reconstruct_and_execute_code(tokens, path, name):
         'error_message': ''
     }
     try:
-        code = reconstruct_code(tokens, name)
+        code = reconstruct_code(tokens, name, path_to_mapping)
         result['code_reconstructed'] = True
         result['code'] = code
     except Exception as e:
