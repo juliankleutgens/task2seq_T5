@@ -49,6 +49,7 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
 
     model.train()
     print(f"The model is on the device: {next(model.parameters()).device}")
+    percent_of_seen_pairs = 0
 
     # ------------------- Training Loop -------------------
     # Add tqdm progress bar for the training loop
@@ -63,6 +64,9 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
         lm_labels[y[:, 1:] == tokenizer.pad_token_id] = -100
         ids = data['source_ids'].to(device, dtype=torch.long)
         mask = data['source_mask'].to(device, dtype=torch.long)
+        percent_of_seen_pairs += data["percent_of_seen_pairs"].to(torch.float).sum()
+        print(data["percent_of_seen_pairs"].to(torch.float).sum())
+
 
         outputs = model(input_ids=ids, attention_mask=mask, decoder_input_ids=y_ids, labels=lm_labels)
         loss = outputs[0]
@@ -78,6 +82,8 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
         optimizer.step()
 
     console.log(f"[Saving Model]...\n")
+    percent_of_seen_pairs = percent_of_seen_pairs/len(loader.dataset) if cfg["num_of_itr"] == -1 else percent_of_seen_pairs/(step*cfg["model_params"]["TRAIN_BATCH_SIZE"])
+    print(f"Training: The T5 Model saw on average {percent_of_seen_pairs*100}% of the input output pairs")
     # Saving the model after training
     path = os.path.join(output_dir, "model_files")
 
@@ -99,6 +105,7 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
     accuracy = {}
     num_reconstructed_codes = {}
     num_generated_outputs = {}
+    percent_of_seen_pairs = {}
     # Initialize accumulators for scores
     total_bleu_score = 0
     total_levenshtein_distance = 0
@@ -123,7 +130,8 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
                                  'Code Reconstructed': output['codes_reconstructed'],
                                  'Code Initializable': output['codes_initializable'],
                                  'Output Generated': output['outputs_generated'],
-                                 'Error': output['errors']})
+                                 'Error': output['errors'],
+                                 'Number of Seen Pairs': output["percent_of_seen_pairs"]})
 
         if not os.path.exists(os.path.join(output_dir, 'predictions.csv')):
             final_df.to_csv(os.path.join(output_dir, 'predictions.csv'), mode='w', header=True, index=False)
@@ -139,7 +147,8 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
         accuracy[f"{test_set}/accuracy"] = sum(output['accuracies'])/len(output['accuracies'])
         num_reconstructed_codes[f"{test_set}/percent_reconstructed_codes"] = sum(output['codes_reconstructed'])/len(output['codes_reconstructed'])
         num_generated_outputs[f"{test_set}/percent_generated_outputs"] = sum(output['outputs_generated'])/len(output['outputs_generated'])
-
+        percent_of_seen_pairs[f"{test_set}/percent_of_seen_pairs"] = sum(output["percent_of_seen_pairs"])/len(output["percent_of_seen_pairs"])
+        print(f"For the dataset {test_set} then model saw on average {percent_of_seen_pairs[f'{test_set}/percent_of_seen_pairs']*100}% of the input output pairs")
 
 
     # Calculate average scores across all datasets
@@ -163,6 +172,7 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
     print(f"accuracy: {accuracy['accuracy_overall']}")
     print(f"percent_reconstructed_codes: {num_reconstructed_codes['percent_reconstructed_codes_overall']}")
     print(f"percent_generated_outputs: {num_generated_outputs['percent_generated_outputs_overall']}")
+
     return metrics_blue, metrics_leven, accuracy
 
 
@@ -187,6 +197,7 @@ def validate(epoch, tokenizer, model, device, loader, cfg, num_batches, dataset_
     codes_initializable = []
     outputs_generated = []
     errors = []
+    percents_of_seen_pairs = []
     iteration = 0
 
     with torch.no_grad():
@@ -211,8 +222,6 @@ def validate(epoch, tokenizer, model, device, loader, cfg, num_batches, dataset_
 
             preds = []
             j = 0
-
-
             for gen_id in generated_ids:
                 one_sample_pred = []
                 for _id in gen_id:
@@ -264,6 +273,7 @@ def validate(epoch, tokenizer, model, device, loader, cfg, num_batches, dataset_
                 j += 1
             predictions.extend(preds)
             actuals.extend(target)
+            percents_of_seen_pairs.extend(data["percent_of_seen_pairs"])
             names.extend(name)
 
             # Calculate BLEU scores
@@ -302,6 +312,7 @@ def validate(epoch, tokenizer, model, device, loader, cfg, num_batches, dataset_
             'bleu_scores': bleu_scores, 'avg_levenshtein_distance': avg_levenshtein_distance,
             'levenshtein_distances': levenshtein_distances, 'names': names,
             'codes': codes, 'accuracies': accuracies, 'codes_reconstructed': codes_reconstructed,
-            'codes_initializable': codes_initializable, 'outputs_generated': outputs_generated, 'errors': errors}
+            'codes_initializable': codes_initializable, 'outputs_generated': outputs_generated, 'errors': errors,
+            'percent_of_seen_pairs': percents_of_seen_pairs}
 
     return output

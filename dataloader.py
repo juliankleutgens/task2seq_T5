@@ -47,14 +47,30 @@ class DataSetClass(Dataset):
         # ------- Tokenize source text  ------
         #source_text_tokens = self.tokenizer.tokenize(source_text)
         #print(len(source_text_tokens))
+        # find all input string in the source text
         source_encoded = self.tokenizer.encode_plus(
             source_text,
             max_length=self.source_len,
             padding='max_length',
             truncation=True,
             return_tensors='pt')
-        # convert back
-        #source_decode = self.tokenizer.convert_ids_to_tokens(source_encoded['input_ids'].squeeze())
+        # Check if truncation occurred
+        tokens = self.tokenizer.tokenize(source_text)
+        if len(tokens) > self.source_len:
+            source_decode = self.tokenizer.convert_ids_to_tokens(source_encoded['input_ids'].squeeze())
+            source_decode_reversed = list(reversed(source_decode))
+            last_occurrence_index = len(source_decode) - 1 - source_decode_reversed.index('▁input')
+            source_cut_off = source_decode[:last_occurrence_index]
+            source_encoded = self.tokenizer.encode_plus(
+                source_cut_off,
+                max_length=self.source_len,
+                padding='max_length',
+                truncation=True,
+                return_tensors='pt')
+            percent_of_the_seen_pairs = source_cut_off.count('▁input')/tokens.count('▁input')
+        else:
+            percent_of_the_seen_pairs = 1
+
         #print("tokenized_task_sample_length",len(self.tokenizer.tokenize(source_text)))
         #print("encoded_task_sample_length", source_encoded['input_ids'].shape[1])
 
@@ -86,4 +102,5 @@ class DataSetClass(Dataset):
             'target_mask': target_mask,
             'name': name,
             'local_path': path,
+            'percent_of_seen_pairs': percent_of_the_seen_pairs
         }
