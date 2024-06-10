@@ -57,7 +57,7 @@ def create_loader(dataset, train_params, max_samples=10000):
 
 
 
-def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), training_logger=Table(title="Training Logs", box=box.ASCII)):
+def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
     """
     T5 trainer
     """
@@ -80,7 +80,6 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
     # tokenzier for encoding the text
     tokenizer = T5Tokenizer.from_pretrained(model_params["MODEL"])
 
-
     # Define the model and send it to the appropriate device
     model = T5ForConditionalGeneration.from_pretrained(model_params["MODEL"])
 
@@ -93,10 +92,11 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console(), traini
 
 
     if cfg["device"] == "cuda" and "n_gpu" in cfg:
-        os.environ["CUDA_VISIBLE_DEVICES"] = cfg["n_gpu"]
+        device = torch.device(f"cuda:{str(cfg['n_gpu'])}")
+    else:
+        device = torch.device("cuda")
 
     if cfg["device"] == "cuda" and torch.cuda.is_available():
-        device = torch.device("cuda")
         model = model.to(device)
         # Check if we need to train on multiple GPUs
         if train_on_multiple_gpus and torch.cuda.device_count() > 1:

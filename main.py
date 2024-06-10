@@ -119,13 +119,6 @@ for i, df in enumerate(dfs_test_list):
         dfs_test = pd.concat([dfs_test, df], ignore_index=True)
     dfs_test_list[i] = df
 
-# get log file
-training_logger = Table(Column("Epoch", justify="center"),
-                        Column("Steps", justify="center"),
-                        Column("Loss", justify="center"),
-                        title="Training Status", pad_edge=False, box=box.ASCII)
-# Apply the reformatting function
-# all_dsl_tokens = get_all_dsl_tokens()
 
 # ---- init console ----
 # define a rich console logger
@@ -149,8 +142,6 @@ print(f"Copied dsl_token_mappings_T5.json and config.yaml to: {output_dir}")
 
 
 # ------------------- Start Training -------------------
-T5Trainer(cfg=cfg, dataframe_train=dfs_train, dataframe_test_list=dfs_test_list, console=console,
-          training_logger=training_logger)
-# can I save the output folder to weights and biases?
+T5Trainer(cfg=cfg, dataframe_train=dfs_train, dataframe_test_list=dfs_test_list, console=console)
 wandb.save(output_dir)
 

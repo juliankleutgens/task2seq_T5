@@ -16,6 +16,7 @@ test_paths:
 
 load_new_mappings: true
 type_of_mapping: 'val2alphabet'
+n_gpu: "3"
 
 device: 'cuda'
 train_on_multiple_gpus: false
