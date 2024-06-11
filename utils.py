@@ -401,7 +401,7 @@ def reconstruct_code(token_list, name_idx='005t822n', path_to_mapping='dsl_token
                         if idx_end_line > idx_of_end_func:
                             idx_end_line = idx_of_end_func
 
-                # Rebuild the line
+
                 code_line = rebuild_the_line(tokens, i, idx_end_line, path_to_mapping)
                 current_function.extend(code_line)
                 i = idx_end_line  # Move index to next relevant token
@@ -428,9 +428,19 @@ def reconstruct_code(token_list, name_idx='005t822n', path_to_mapping='dsl_token
 
 def rebuild_the_line(tokens, idx_beginning, idx_end_line, path_to_mapping):
     # load mapping
-    dsl_token_mappings = load_token_mappings_utils(filename=path_to_mapping)
+    dsl_token_mappings = load_token_mappings_utils(filename=path_to_mapping) # tokens[idx_beginning:idx_end_line]
     idx_of_break = tokens.index(';', idx_beginning + 1, idx_end_line)
     function_name = tokens[idx_of_break - 1]
+    sub_tokens = tokens[idx_beginning:idx_of_break]
+    if sub_tokens.count('x') > 1 or (sub_tokens.count('x') + sub_tokens.count('O')) > 1:
+        reversed_sub_tokens = sub_tokens[::-1]
+        reverse_index = reversed_sub_tokens.index('x')
+        idx_var_name = idx_of_break - reverse_index - 1
+        function_name = ''.join(tokens[idx_var_name:idx_of_break])
+        idx_var_name = idx_var_name + 1
+    else:
+        idx_var_name = idx_of_break
+
     arguments = tokens[idx_of_break + 1:idx_end_line]
     args = []
     unrecognized_tokens = []
@@ -442,24 +452,26 @@ def rebuild_the_line(tokens, idx_beginning, idx_end_line, path_to_mapping):
             unrecognized_tokens.append(arguments[for1])
             for1 += 1
         elif arguments[for1] == 'x':
-            if arguments[for1 + 1] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                args.extend([''.join(arguments[for1:for1 + 2])])
-                for1 += 2
-            elif arguments[for1 + 2] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                args.extend([''.join(arguments[for1:for1 + 3])])
-                for1 += 3
-            elif arguments[for1 + 3] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                args.extend([''.join(arguments[for1:for1 + 4])])
-                for1 += 4
+            for2 = for1 + 1
+            argument = 'x'
+            while for2 < len(arguments):
+                if arguments[for2] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
+                    argument += arguments[for2]
+                    for2 += 1
+                else:
+                    break
+            args.extend([argument])
+            for1 = for2
+
         else:
             args.extend([arguments[for1]])
             for1 += 1
 
-    if tokens[idx_of_break - 2] == 'O':
+    if tokens[idx_beginning + 1] == 'O':
         var_name = 'O'
         code_line = f"    {var_name} = {function_name}({', '.join(args)})"
     else:
-        var_name = ''.join(tokens[idx_beginning + 1:idx_of_break - 1])
+        var_name = ''.join(tokens[idx_beginning+1:idx_var_name-1])
         code_line = f"    {var_name} = {function_name}({', '.join(args)})"
     if unrecognized_tokens:
         comment = ', '.join(unrecognized_tokens)
