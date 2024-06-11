@@ -66,6 +66,11 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
     model_params = cfg["model_params"]
     extra_tokens = cfg["extra_token"]
     train_on_multiple_gpus = cfg["train_on_multiple_gpus"]
+    try:
+        fined_tuned_dir = cfg["model_params"]["fined_tuned_dir"]
+    except:
+        fined_tuned_dir = None
+    # check if the output directory exists
 
     # Print CUDA availability information
     try:
@@ -81,8 +86,19 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
     tokenizer = T5Tokenizer.from_pretrained(model_params["MODEL"])
 
     # Define the model and send it to the appropriate device
-    model = T5ForConditionalGeneration.from_pretrained(model_params["MODEL"])
 
+    # how can I use a model which was fine-tuned on a different dataset and I already have it saved in that location: /Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240605_0824/model_files/model.safetensors
+    try:
+        if os.path.exists(fined_tuned_dir):
+            model = T5ForConditionalGeneration.from_pretrained(fined_tuned_dir)
+            print(f"Loading model from {fined_tuned_dir}")
+        else:
+            model = T5ForConditionalGeneration.from_pretrained(model_params["MODEL"])
+            print(f"Loading model from {model_params['MODEL']}")
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        model = T5ForConditionalGeneration.from_pretrained(model_params["MODEL"])
+        print(f"Loading model from {model_params['MODEL']}")
     # ------------------------------ load device ------------------------------
     # Set the environment variable to use specified GPUs if device is set to cuda
     # Set the environment variable to use only the n-th GPU
@@ -99,7 +115,15 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
         # Check if we need to train on multiple GPUs
         if train_on_multiple_gpus and torch.cuda.device_count() > 1:
             print(f"Using {torch.cuda.device_count()} GPUs")
-            model = torch.nn.DataParallel(model)
+            device = torch.device("cuda")
+            model = model.to(device)
+            try:
+                list_gpus = list(cfg['n_gpu'])
+                model = torch.nn.DataParallel(model, device_ids=list_gpus)
+                print(f"Using GPUs: {list_gpus}")
+            except:
+                model = torch.nn.DataParallel(model)
+                print(f"Using all available GPUs")
         else:
             print("Using a single GPU")
     elif cfg["device"] == "mps":

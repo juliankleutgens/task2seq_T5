@@ -115,8 +115,12 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
         if test_set == '/training':
             test_set = 'Real ARC Training Data'
         console.print(f"Validation for dataset {test_paths[i]}")
-        output = validate(epoch=epoch,tokenizer=tokenizer, model=model, device=device, loader=val_loader,
+        try:
+            output = validate(epoch=epoch,tokenizer=tokenizer, model=model, device=device, loader=val_loader,
                             cfg=cfg, num_batches=cfg["model_params"]["VALID_BATCH_SIZE"], dataset_path=test_paths[i])
+        except Exception as e:
+            print(f"Error validating: {e}")
+            continue
         final_df = pd.DataFrame({'Epoch':epoch,
                                  'Testset': test_set,
                                  'Average Blue Score':output['bleu_scores'],
@@ -144,8 +148,11 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
         metrics_blue[f"{test_set}/bleu_score"] = output['avg_bleu_score']
         metrics_leven[f"{test_set}/levenshtein_distance"] = output['avg_levenshtein_distance']
         accuracy[f"{test_set}/accuracy"] = sum(output['accuracies'])/len(output['accuracies'])
+        print(f"For the dataset {test_set} then model has an accuracy of {accuracy[f'{test_set}/accuracy']*100}%")
         num_reconstructed_codes[f"{test_set}/percent_reconstructed_codes"] = sum(output['codes_reconstructed'])/len(output['codes_reconstructed'])
+        print(f"For the dataset {test_set} then model reconstructed on average {num_reconstructed_codes[f'{test_set}/percent_reconstructed_codes']*100}% of the codes")
         num_generated_outputs[f"{test_set}/percent_generated_outputs"] = sum(output['outputs_generated'])/len(output['outputs_generated'])
+        print(f"For the dataset {test_set} then model generated on average {num_generated_outputs[f'{test_set}/percent_generated_outputs']*100}% of the outputs")
         percent_of_seen_pairs[f"{test_set}/percent_of_seen_pairs"] = sum(output["percent_of_seen_pairs"])/len(output["percent_of_seen_pairs"])
         print(f"For the dataset {test_set} then model saw on average {percent_of_seen_pairs[f'{test_set}/percent_of_seen_pairs']*100}% of the input output pairs")
 
@@ -275,36 +282,47 @@ def validate(epoch, tokenizer, model, device, loader, cfg, num_batches, dataset_
             percents_of_seen_pairs.extend(data["percent_of_seen_pairs"])
             names.extend(name)
 
+            try:
             # Calculate BLEU scores
-            for pred, act in zip(preds, target):
-                # trim the list of if the token #EoF is present
-                if '#EoF' in pred:
-                    pred_blue = pred[:pred.index('#EoF')+1]
-                else:
-                    pred_blue = pred
-                if '#EoF' in act:
-                    act_blue = act[:act.index('#EoF')+1]
-                else:
-                    act_blue = act
-                score = sentence_bleu([act_blue], pred_blue,
-                                      smoothing_function=SmoothingFunction().method1)
-                bleu_scores.append(score)
+                for pred, act in zip(preds, target):
+                    # trim the list of if the token #EoF is present
+                    if '#EoF' in pred:
+                        pred_blue = pred[:pred.index('#EoF')+1]
+                    else:
+                        pred_blue = pred
+                    if '#EoF' in act:
+                        act_blue = act[:act.index('#EoF')+1]
+                    else:
+                        act_blue = act
+                    score = sentence_bleu([act_blue], pred_blue,
+                                          smoothing_function=SmoothingFunction().method1)
+                    bleu_scores.append(score)
 
-                # Flatten the lists of tokens into strings for Levenshtein distance
-                pred_str = ''.join(pred)
-                act_str = ''.join(act)
-                levenshtein_distance = Levenshtein.distance(pred_str, act_str)
-                levenshtein_distances.append(levenshtein_distance)
-        if len(levenshtein_distances) > 0:
-            avg_levenshtein_distance = sum(levenshtein_distances) / len(levenshtein_distances)
-        else:
-            avg_levenshtein_distance = 0
-            print(f"No levenshtein distances calculated, for the task {data['name']}")
-        if len(bleu_scores) > 0:
-            avg_bleu_score = sum(bleu_scores) / len(bleu_scores)
-        else:
+                    # Flatten the lists of tokens into strings for Levenshtein distance
+                    pred_str = ''.join(pred)
+                    act_str = ''.join(act)
+                    levenshtein_distance = Levenshtein.distance(pred_str, act_str)
+                    levenshtein_distances.append(levenshtein_distance)
+            except Exception as e:
+                print(f"Error calculating BLEU scores and Levenshtein distances: {e}")
+                for _ in range(len(preds)):
+                    levenshtein_distances.append(0)
+                    bleu_scores.append(0)
+        try:
+            if len(levenshtein_distances) > 0:
+                avg_levenshtein_distance = sum(levenshtein_distances) / len(levenshtein_distances)
+            else:
+                avg_levenshtein_distance = 0
+                print(f"No levenshtein distances calculated, for the task {data['name']}")
+            if len(bleu_scores) > 0:
+                avg_bleu_score = sum(bleu_scores) / len(bleu_scores)
+            else:
+                avg_bleu_score = 0
+                print(f"No bleu scores calculated, for the task {data['name']}")
+        except Exception as e:
+            print(f"Error calculating average BLEU scores and Levenshtein distances: {e}")
             avg_bleu_score = 0
-            print(f"No bleu scores calculated, for the task {data['name']}")
+            avg_levenshtein_distance = 1000
 
     # Return the predictions, actuals, and scores as dictionary
     output = {'predictions': predictions, 'actuals': actuals, 'avg_bleu_score': avg_bleu_score,

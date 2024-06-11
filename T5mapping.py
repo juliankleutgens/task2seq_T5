@@ -45,7 +45,20 @@ def map_list(list_of_tokens, dsl_token_mappings):
         if token in dsl_token_mappings:
             T5_tokens_list.append(dsl_token_mappings[token])
         else:
-            raise ValueError(f"Input list contains a token that is not in the mapping: {token}, set loading_new_mappings to True to generate a new mapping.")
+            try:
+                # get the closest token with levenshtein distance
+                all_tokens = list(dsl_token_mappings.values())
+                best_match, score = get_best_match_levenstein(token,all_tokens , [])
+
+                print(f"Input list contains a token that is not in the mapping: {token}, set loading_new_mappings to True to generate a new mapping.")
+                print(f"Best match for {token} is {best_match} with a score of {score}")
+                T5_tokens_list.append(best_match)
+            except:
+                # if the token is not in the mapping and there is no best match
+                # use a random token from the T5 vocabulary
+                print(f"Input list contains a token that is not in the mapping: {token}, set loading_new_mappings to True to generate a new mapping.")
+                print("Randomly selecting a token from the T5 vocabulary.")
+                T5_tokens_list.append(list(tokenizer.get_vocab().keys())[np.random.randint(0, len(tokenizer.get_vocab().keys()))])
     return T5_tokens_list
 
 

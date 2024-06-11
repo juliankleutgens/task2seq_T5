@@ -84,6 +84,7 @@ output_dir = cfg["output_dir"]
 # use cfg to save the config.yaml file
 with open(os.path.join(output_dir, "config_used.yaml"), "w") as file:
     OmegaConf.save(cfg, file)
+print(f"New output directory created at: {new_output_dir}")
 
 
 # ------------------- get Training data -------------------
@@ -139,8 +140,6 @@ console = Console(record=True)
 # copy past the dsl_token_mapping.json file and the config.yaml to the output directory
 shutil.copy("dsl_token_mappings_T5.json", output_dir)
 cfg["path_to_mapping"] = os.path.join(output_dir, "dsl_token_mappings_T5.json")
-
-print(f"New output directory created at: {new_output_dir}")
 print(f"Copied dsl_token_mappings_T5.json and config.yaml to: {output_dir}")
 
 

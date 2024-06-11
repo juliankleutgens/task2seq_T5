@@ -1,13 +1,13 @@
-max_samples: -1
+max_samples: 400
 test_samples: 1000
 
-num_of_itr: 15000
+num_of_itr: 20
 
 train_paths:
   - '/home/jkleutgens/training_data'
   - '/home/jkleutgens/reverse_engineering/generated_tasks'
 
-test_mode: false
+test_mode: true
 
 test_paths:
   - '/home/jkleutgens/data_test/ct_schema'
@@ -17,7 +17,7 @@ test_paths:
 
 load_new_mappings: true
 type_of_mapping: 'val2alphabet'
-n_gpu: "7"
+n_gpu: 7
 
 device: 'cuda'
 train_on_multiple_gpus: false
