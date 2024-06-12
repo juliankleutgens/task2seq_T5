@@ -15,6 +15,7 @@ from numpy.typing import NDArray
 import numpy as np
 import os
 import dsl
+import torch
 
 from tqdm import tqdm
 from transformers import T5Tokenizer
@@ -540,6 +541,31 @@ def reconstruct_and_execute_code(tokens, path, name, path_to_mapping):
     result['accuracy'] = result['accuracy'] / len(task)
     return result
 
+from torch.nn import CrossEntropyLoss
+
+def weighted_loss(outputs, lm_labels):
+    logits = outputs.logits
+    loss = 0
+
+    # Flatten the logits and labels for computing cross entropy loss
+    batch_size, seq_len, vocab_size = logits.shape
+    logits = logits.view(-1, vocab_size)
+    lm_labels = lm_labels.view(-1)
+
+
+
+    # Create a weight tensor with higher weights for the first tokens
+    sequence_length = len(lm_labels)
+    weights = torch.linspace(1.5, 0.5, steps=sequence_length).to(lm_labels.device)
+
+
+    # Calculate the loss using CrossEntropyLoss
+    loss_fct = CrossEntropyLoss(ignore_index=-100)
+    for i in range(len(lm_labels)):
+        if not lm_labels[i] == -100:
+            if not torch.isnan(loss_fct(logits[i, :], lm_labels[i])):
+                loss += weights[i] * (loss_fct(logits[i, :], lm_labels[i]) / lm_labels[lm_labels != -100].shape[0])
+    return loss
 
 if __name__ == "__main__":
     # Apply the reformatting function

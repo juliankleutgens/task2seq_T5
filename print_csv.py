@@ -13,9 +13,25 @@ my_path = current_path = os.getcwd()
 # old results
 path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240603_1912/predictions.csv'
 path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240605_0824/predictions.csv'
-# new
+# new results from the night it crashed
 path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240610_2024/predictions.csv'
 #path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240610_2018/predictions.csv'
+
+
+# -------------------- New Results --------------------
+# small T5 model + x 2 alphabet
+path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240611_1021/predictions.csv'
+
+# base T5 model + x 2 alphabet
+#path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240611_1147/predictions.csv'
+
+# small T5 model +  x2y
+#path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240611_1537/predictions.csv'
+
+
+
+
+
 file_path = os.path.join(my_path, )
 data = pd.read_csv(path)
 
@@ -39,6 +55,8 @@ for data_set in ['/ct_schema','/or_schema','/gl_schema']:
     print(f"Average Blue Score for {data_set} in epoch {epoch}: {average_blue_score}")
     average_accuracy = filtered_dataset['Accuracy'].mean()
     print(f"Average Accuracy for {data_set} in epoch {epoch}: {average_accuracy}")
+    average_Ini = filtered_dataset['Code Initializable'].mean()
+    print(f"Average Code Initializable for {data_set} in epoch {epoch}: {average_Ini}")
     # find maximum and minimum values and get the argument index
     #max_blue_score = filtered_data['Average Blue Score'].idxmax()
     #min_blue_score = filtered_data['Average Blue Score'].idxmin()
@@ -76,13 +94,13 @@ if print_will_be_done:
 # random sample
 # get the last epoch
 epoch = data['Epoch'].max()
-filtered_data = data[(data['Epoch'] == epoch) & (data['Accuracy'] == 0) & (data['Average Blue Score'] < 0.4)]
+#filtered_data = data[(data['Epoch'] == epoch) & (data['Accuracy'] == 1) & (data['Average Blue Score'] < 0.9)]
 filtered_data = data[(data['Epoch'] == epoch) & (data['Code Reconstructed'] == 1) & (data['Output Generated'] == 0)]
 #filtered_data = data[(data['Epoch'] == epoch) & (data['Levenshtein'] == 4504) & (data['Average Blue Score'] > 0.4444)& (data['Average Blue Score'] < 0.45)]
 l = len(filtered_data.index)
 print()
 print()
-print(f"Number of samples with that filter: {l} out of all {len(data.index)} samples")
+print(f"Number of samples with that filter: {l} out of all {len(data[(data['Epoch'] == epoch)].index)} samples")
 
 i = random.choice(filtered_data.index)
 
@@ -112,7 +130,7 @@ print(f" predicted tokens: {data['Generated Text'][i]}")
 print()
 print()
 print(f"Actual tokens: {data['Actual Text'][i][:idx_end+15]} ... ")
-
+print()
 
 
 

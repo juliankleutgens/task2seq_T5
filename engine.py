@@ -11,6 +11,7 @@ import torchsummary
 import numpy as np
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 import pandas as pd
+from torch.nn import CrossEntropyLoss
 from rouge import Rouge
 import torch
 from tqdm import tqdm
@@ -52,6 +53,7 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
     percent_of_seen_pairs = 0
 
     # ------------------- Training Loop -------------------
+    iter_70_percent = int(len(loader) * 0.7)
     # Add tqdm progress bar for the training loop
     for step, data in tqdm(enumerate(loader, 0), total=len(loader), desc=f"Training Epoch {epoch}", leave=False):
         if step > cfg["num_of_itr"] and cfg["num_of_itr"] != -1:
@@ -69,6 +71,13 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
 
         outputs = model(input_ids=ids, attention_mask=mask, decoder_input_ids=y_ids, labels=lm_labels)
         loss = outputs[0]
+
+        if True: #cfg["weighted_loss"] == True and step > iter_70_percent:
+            try:
+                loss = weighted_loss(outputs, lm_labels)
+                print('Worked')
+            except Exception as e:
+                loss = loss
         if loss.dim() != 0 & train_on_multiple_gpus:
             # the loss must be a scaler
             loss = loss.mean()
