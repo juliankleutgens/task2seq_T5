@@ -44,43 +44,12 @@ class DataSetClass(Dataset):
         source_text = str(self.source_text[index])
         target_string = self.target_text[index]
 
-        # ------- Tokenize source text  ------
-        #source_text_tokens = self.tokenizer.tokenize(source_text)
-        #print(len(source_text_tokens))
-        # find all input string in the source text
-        source_encoded = self.tokenizer.encode_plus(
-            source_text,
-            max_length=self.source_len,
-            padding='max_length',
-            truncation=True,
-            return_tensors='pt')
-        # Check if truncation occurred
-        tokens = self.tokenizer.tokenize(source_text)
-        if len(tokens) > self.source_len:
-            try:
-                source_decode = self.tokenizer.convert_ids_to_tokens(source_encoded['input_ids'].squeeze())
-                source_decode_reversed = list(reversed(source_decode))
-                last_occurrence_index = len(source_decode) - 1 - source_decode_reversed.index('▁input')
-                source_cut_off = source_decode[:last_occurrence_index]
-                source_encoded = self.tokenizer.encode_plus(
-                    source_cut_off,
-                    max_length=self.source_len,
-                    padding='max_length',
-                    truncation=True,
-                    return_tensors='pt')
-                percent_of_the_seen_pairs = source_cut_off.count('▁input')/tokens.count('▁input')
-            except:
-                percent_of_the_seen_pairs = 1
-        else:
-            percent_of_the_seen_pairs = 1
-
-        #print("tokenized_task_sample_length",len(self.tokenizer.tokenize(source_text)))
-        #print("encoded_task_sample_length", source_encoded['input_ids'].shape[1])
 
         # -------------- tokenizes target ------------
         # so convert it to embedding and tensor
         target_token,_ = map_to_t5_token(target_string,extra_token=self.extra_token, tokenizer=self.tokenizer,
                                          loading_new_mappings=False, path_to_mapping=self.cfg['path_to_mapping'])
+
         target_token_ids = self.tokenizer.convert_tokens_to_ids(target_token)
 
         # print(f"The length of the tokenized solver.py functions sample is: {len(target_token_ids)}")
@@ -97,6 +66,47 @@ class DataSetClass(Dataset):
             print(f"Target Length Exceeded for {self.name[index]} with length {l} is longer than {self.target_len}, gets truncated.")
         # Create attention masks for target
         target_mask = torch.where(target_ids == self.tokenizer.pad_token_id, 0, 1)
+
+
+
+        # ------- Tokenize source text  ------
+        tokens = self.tokenizer.tokenize(source_text)
+        # if prompt is True the first 3 tokens are the targt which are for all samples te same are concatenated to the source end
+        if self.cfg['prompting']:
+            j = 2
+            if 'BoF' in self.cfg['extra_token']:
+                j += 1
+            if 'var_to_num' in self.cfg['extra_token']:
+                j += 1
+            prompt = target_token[:j]
+        else:
+            prompt = []
+        tokens = tokens + prompt
+        source_encoded = self.tokenizer.encode_plus(
+                tokens,
+                max_length=self.source_len,
+                padding='max_length',
+                truncation=True,
+                return_tensors='pt')
+
+        # Check if truncation occurred
+        if len(tokens) > 20:#self.source_len:
+            try:
+                source_decode_reversed = list(reversed(tokens))
+                last_occurrence_index = len(tokens) - 1 - source_decode_reversed.index('▁input')
+                source_cut_off = tokens[:last_occurrence_index] + prompt
+                source_encoded = self.tokenizer.encode_plus(
+                    source_cut_off,
+                    max_length=self.source_len,
+                    padding='max_length',
+                    truncation=True,
+                    return_tensors='pt')
+                percent_of_the_seen_pairs = source_cut_off.count('▁input')/tokens.count('▁input')
+            except:
+                percent_of_the_seen_pairs = 1
+        else:
+            percent_of_the_seen_pairs = 1
+
 
         return {
             'source_ids': source_encoded['input_ids'].squeeze(),

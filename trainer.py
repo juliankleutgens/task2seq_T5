@@ -104,7 +104,7 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
     # Set the environment variable to use only the n-th GPU
     # n = "0" => use the first GPU
     # n = 1 => use the second GPU
-    if cfg["device"] == "cuda" and "n_gpu" in cfg:
+    if cfg["device"] == "cuda" and "n_gpu" in cfg and not train_on_multiple_gpus:
         device = torch.device(f"cuda:{str(cfg['n_gpu'])}")
     else:
         device = torch.device("cuda")

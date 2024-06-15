@@ -41,7 +41,8 @@ model_params:
   MAX_TARGET_TEXT_LENGTH: 512
   SEED: 42
 
-weighted_loss: True
+weighted_loss: False
+prompting: True
 
 wandb:
   wandb_user: #"your_wandb_user"
