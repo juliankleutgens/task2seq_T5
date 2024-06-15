@@ -72,10 +72,10 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
         outputs = model(input_ids=ids, attention_mask=mask, decoder_input_ids=y_ids, labels=lm_labels)
         loss = outputs[0]
 
-        if True: #cfg["weighted_loss"] == True and step > iter_70_percent:
+        if cfg["weighted_loss"] == True and step > iter_70_percent:
             try:
                 loss = weighted_loss(outputs, lm_labels)
-                print('Worked')
+
             except Exception as e:
                 loss = loss
         if loss.dim() != 0 & train_on_multiple_gpus:
