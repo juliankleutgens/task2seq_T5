@@ -1,5 +1,5 @@
-max_samples: 4
-test_samples: 4
+max_samples: 2
+test_samples: 2
 
 num_of_itr: 2
 

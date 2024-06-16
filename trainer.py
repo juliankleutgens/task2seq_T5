@@ -184,8 +184,7 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
         val_params = {
                 'batch_size': model_params["VALID_BATCH_SIZE"],
                 'shuffle': False,
-                'num_workers': 0
-            }
+                'num_workers': 0}
 
 
         val_loader = DataLoader(val_set, **val_params)

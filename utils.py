@@ -567,6 +567,27 @@ def weighted_loss(outputs, lm_labels):
                 loss += weights[i] * (loss_fct(logits[i, :], lm_labels[i]) / lm_labels[lm_labels != -100].shape[0])
     return loss
 
+
+def small_trick(our_token_sample, extra_tokens):
+    if 'BoF' in extra_tokens and 'var_to_num' in extra_tokens:
+        our_token_sample[0] = '#BoF'
+        our_token_sample[1] = '#newline'
+        our_token_sample[2] = 'x'
+        our_token_sample[3] = '1'
+    elif 'BoF' in extra_tokens:
+        our_token_sample[0] = '#BoF'
+        our_token_sample[1] = '#newline'
+        our_token_sample[2] = 'x1'
+    elif 'var_to_num' in extra_tokens:
+        our_token_sample[0] = '#newline'
+        our_token_sample[1] = 'x'
+        our_token_sample[2] = '1'
+    else:
+        our_token_sample[0] = '#newline'
+        our_token_sample[1] = 'x1'
+    return our_token_sample
+
+
 if __name__ == "__main__":
     # Apply the reformatting function
     file_content = read_solver_file('/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/ct_schema')

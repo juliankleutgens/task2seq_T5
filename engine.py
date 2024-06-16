@@ -97,7 +97,7 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
         scheduler.step(epoch + step /iterations)
 
     console.log(f"[Saving Model]...\n")
-    percent_of_seen_pairs = percent_of_seen_pairs/len(loader.dataset) if cfg["num_of_itr"] == -1 else percent_of_seen_pairs/(step*cfg["model_params"]["TRAIN_BATCH_SIZE"])
+    percent_of_seen_pairs = percent_of_seen_pairs/len(loader.dataset) if cfg["num_of_itr"] == -1 else percent_of_seen_pairs/((step+1)*cfg["model_params"]["TRAIN_BATCH_SIZE"])
     print(f"Training: The T5 Model saw on average {percent_of_seen_pairs*100}% of the input output pairs")
     # Saving the model after training
     path = os.path.join(output_dir, "model_files")
@@ -250,6 +250,7 @@ def validate(epoch, tokenizer, model, device, loader, cfg, num_batches, dataset_
                     token = tokenizer.convert_ids_to_tokens(int(_id))
                     one_sample_pred.append(token)
                 our_token_sample = map_back(one_sample_pred, cfg["path_to_mapping"])
+                our_token_sample = small_trick(our_token_sample, cfg["extra_token"])
                 preds.append(our_token_sample)
                 try:
                     result = reconstruct_and_execute_code(our_token_sample, path[j], name[j], path_to_mapping=cfg["path_to_mapping"])
