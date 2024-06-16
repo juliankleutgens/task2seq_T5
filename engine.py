@@ -9,6 +9,7 @@ import logging
 import torch
 import torchsummary
 import numpy as np
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 import pandas as pd
 from torch.nn import CrossEntropyLoss
@@ -27,6 +28,7 @@ from rich import box
 from rich.console import Console
 from utils import *
 from torch import cuda
+from torch.optim.lr_scheduler import StepLR
 from T5mapping import *
 from torch.utils.data import DataLoader, Subset
 import random
@@ -52,8 +54,12 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
     print(f"The model is on the device: {next(model.parameters()).device}")
     percent_of_seen_pairs = 0
 
+    # Initialize the learning rate scheduler
+    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=10, T_mult=2)
+    iterations = cfg["num_of_itr"] if cfg["num_of_itr"] != -1 else len(loader)
     # ------------------- Training Loop -------------------
     iter_70_percent = int(len(loader) * 0.7)
+
     # Add tqdm progress bar for the training loop
     for step, data in tqdm(enumerate(loader, 0), total=len(loader), desc=f"Training Epoch {epoch}", leave=False):
         if step > cfg["num_of_itr"] and cfg["num_of_itr"] != -1:
@@ -88,6 +94,7 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        scheduler.step(epoch + step /iterations)
 
     console.log(f"[Saving Model]...\n")
     percent_of_seen_pairs = percent_of_seen_pairs/len(loader.dataset) if cfg["num_of_itr"] == -1 else percent_of_seen_pairs/(step*cfg["model_params"]["TRAIN_BATCH_SIZE"])
