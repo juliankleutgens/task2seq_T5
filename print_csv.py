@@ -29,7 +29,8 @@ path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/outp
 #path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240611_1537/predictions.csv'
 
 
-
+# ----- Results with scheduler -----
+path = '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240616_2205/predictions.csv'
 
 
 file_path = os.path.join(my_path, )
@@ -95,7 +96,7 @@ if print_will_be_done:
 # get the last epoch
 epoch = data['Epoch'].max()
 #filtered_data = data[(data['Epoch'] == epoch) & (data['Accuracy'] == 1) & (data['Average Blue Score'] < 0.9)]
-filtered_data = data[(data['Epoch'] == epoch) & (data['Code Reconstructed'] == 1) & (data['Output Generated'] == 0)]
+filtered_data = data[(data['Epoch'] == epoch) & (data['Code Reconstructed'] == 1) & (data['Output Generated'] == 1)]
 #filtered_data = data[(data['Epoch'] == epoch) & (data['Levenshtein'] == 4504) & (data['Average Blue Score'] > 0.4444)& (data['Average Blue Score'] < 0.45)]
 l = len(filtered_data.index)
 print()

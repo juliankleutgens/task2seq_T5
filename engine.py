@@ -236,7 +236,7 @@ def validate(epoch, tokenizer, model, device, loader, cfg, num_batches, dataset_
                 input_ids=ids,
                 attention_mask=mask,
                 max_length=model_params["MAX_TARGET_TEXT_LENGTH"],
-                num_beams=2,
+                num_beams=model_params["NUM_BEAMS"],
                 repetition_penalty=2.5,
                 length_penalty=1.0,
                 early_stopping=True

@@ -191,7 +191,7 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
         val_loader_list.append(val_loader)
 
     # Defining the optimizer that will be used to tune the weights of the network in the training session.
-    optimizer = torch.optim.Adam(params=model.parameters(), lr=model_params["LEARNING_RATE"])
+    optimizer = torch.optim.AdamW(params=model.parameters(), lr=model_params["LEARNING_RATE"])
 
     # Training loop
     console.log(f'[Initiating Fine Tuning]...\n')

@@ -1,4 +1,4 @@
-max_samples: 400
+max_samples: -1
 test_samples: 1000
 
 num_of_itr: 1000
@@ -7,7 +7,7 @@ train_paths:
   - '/home/jkleutgens/training_data'
   - '/home/jkleutgens/reverse_engineering/generated_tasks'
 
-test_mode: true
+test_mode: false
 
 test_paths:
   - '/home/jkleutgens/data_test/ct_schema'
@@ -33,7 +33,7 @@ extra_token:
   - 'BoF'
 
 weighted_loss: False
-prompting: True
+prompting: False
 
 model_params:
   MODEL: "t5-small"
@@ -45,6 +45,7 @@ model_params:
   MAX_SOURCE_TEXT_LENGTH: 1024
   MAX_TARGET_TEXT_LENGTH: 1024
   SEED: 42
+  num_beams: 15
 
 
 
