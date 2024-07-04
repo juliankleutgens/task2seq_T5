@@ -558,19 +558,20 @@ def reconstruct_and_execute_code(tokens, path, name, path_to_mapping):
             except Exception as e:
                 result['error_message'] += f'Error solving task {i}: {e}. '
                 result['output_generated'] = False
-            try:
-                if result['output_generated'] == True and not result['accuracy'] / len(task) == 1:
-                    gen_name = f"{name}_{generate_random_name()}"
-                    path_task = Path.cwd() / 'data' / 'training_generated' / 'X' / f'{gen_name}.json'
-                    path_solver = Path.cwd() / 'data' / 'training_generated' / 'Y' / f'{gen_name}.py'
-                    save_generated_task(input_outputs_pairs, path_task)
-                    os.makedirs(os.path.dirname(path_solver), exist_ok=True)
-                    with open(path_solver, 'w') as f:
-                        f.write(code)
-            except Exception as e:
-                result['error_message'] += f'Error saving the task and the solver: {e}. '
     except Exception as e:
         result['error_message'] += f'Unexpected error during task execution: {e}. '
+
+    try:
+        if result['output_generated'] == True and not result['accuracy'] / len(task) == 1:
+            gen_name = f"{name}_{generate_random_name()}"
+            path_task = Path.cwd() / 'data' / 'training_generated' / 'X' / f'{gen_name}.json'
+            path_solver = Path.cwd() / 'data' / 'training_generated' / 'Y' / f'{gen_name}.py'
+            save_generated_task(input_outputs_pairs, path_task)
+            os.makedirs(os.path.dirname(path_solver), exist_ok=True)
+            with open(path_solver, 'w') as f:
+                f.write(code)
+    except Exception as e:
+        result['error_message'] += f'Error saving the task and the solver: {e}. '
 
     result['accuracy'] = result['accuracy'] / len(task)
     return result
