@@ -111,11 +111,25 @@ print("Testing Data loaded successfully")
 # set to True if you want to load new mappings
 # but leave it to False if you have already loaded the mappings,
 # it takes time to build the mappings
-if load_new_mappings:
+already_loaded = False
+if load_new_mappings and not os.path.exists(cfg["model_params"]["fined_tuned_dir"]):
     tokenizer = T5Tokenizer.from_pretrained('t5-small')
     dfs = dfs_train_list + dfs_test_list
     save_new_mapping_from_df(dfs, extra_token, tokenizer , type_of_mapping)
+elif os.path.exists(cfg["model_params"]["fined_tuned_dir"]):
+    idx = cfg["model_params"]["fined_tuned_dir"].rfind("/")
+    path_to_mapping = cfg["model_params"]["fined_tuned_dir"][:idx+1] + "dsl_token_mappings_T5.json"
+    print(f" We are using a pre-trained model which was already fine tuned with the mapping file, we are copy pasting the file from: {path_to_mapping}")
+    # overwrite the path to the mapping file
+    shutil.copy(path_to_mapping, output_dir)
+    cfg["path_to_mapping"] = os.path.join(output_dir, "dsl_token_mappings_T5.json")
+    already_loaded = True
 
+if not already_loaded:
+    # copy past the dsl_token_mapping.json file and the config.yaml to the output directory
+    shutil.copy("dsl_token_mappings_T5.json", output_dir)
+    cfg["path_to_mapping"] = os.path.join(output_dir, "dsl_token_mappings_T5.json")
+    print(f"Copied dsl_token_mappings_T5.json and config.yaml to: {output_dir}")
 # concatenate all the data
 for i, df in enumerate(dfs_train_list):
     df = pd.DataFrame(df)
@@ -137,10 +151,6 @@ for i, df in enumerate(dfs_test_list):
 # define a rich console logger
 console = Console(record=True)
 
-# copy past the dsl_token_mapping.json file and the config.yaml to the output directory
-shutil.copy("dsl_token_mappings_T5.json", output_dir)
-cfg["path_to_mapping"] = os.path.join(output_dir, "dsl_token_mappings_T5.json")
-print(f"Copied dsl_token_mappings_T5.json and config.yaml to: {output_dir}")
 
 
 # ------------------- Start Training -------------------
