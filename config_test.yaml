@@ -14,7 +14,7 @@ test_paths:
   - '/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/or_schema'
   - '/Users/juliankleutgens/PycharmProjects/arc-dsl-main/abstraction-and-reasoning-challenge/training'
 
-load_new_mappings: true
+load_new_mappings: false
 type_of_mapping: 'val2alphabet'
 
 sparse_type: 'repeated2words'
@@ -40,9 +40,11 @@ model_params:
   MAX_SOURCE_TEXT_LENGTH: 2048
   MAX_TARGET_TEXT_LENGTH: 512
   SEED: 42
+  NUM_BEAMS: 15
+  fined_tuned_dir: '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240618_2121/model_files'
 
 weighted_loss: False
-prompting: True
+prompting: False
 
 wandb:
   wandb_user: #"your_wandb_user"

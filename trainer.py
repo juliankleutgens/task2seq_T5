@@ -55,39 +55,12 @@ def create_loader(dataset, train_params, max_samples=10000):
     subset = Subset(dataset, indices)
     return DataLoader(subset, **train_params)
 
-
-
-def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
-    """
-    T5 trainer
-    """
-    torch.backends.cudnn.deterministic = True
-    output_dir = cfg["output_dir"]
+def get_model(cfg):
     model_params = cfg["model_params"]
-    extra_tokens = cfg["extra_token"]
-    train_on_multiple_gpus = cfg["train_on_multiple_gpus"]
     try:
         fined_tuned_dir = cfg["model_params"]["fined_tuned_dir"]
     except:
         fined_tuned_dir = None
-    # check if the output directory exists
-
-    # Print CUDA availability information
-    try:
-        print(f"The line torch.cuda.is_available() is {torch.cuda.is_available()}")
-        print(f"CUDA Available: {torch.cuda.is_available()}")
-        print(f"CUDA Device Count: {torch.cuda.device_count()}")
-        if torch.cuda.is_available() and torch.cuda.device_count() > 0:
-            print(f"CUDA Device Name: {torch.cuda.get_device_name(0)}")
-    except Exception as e:
-        print(f"Error checking CUDA availability: {e}")
-
-    # tokenzier for encoding the text
-    tokenizer = T5Tokenizer.from_pretrained(model_params["MODEL"])
-
-    # Define the model and send it to the appropriate device
-
-    # how can I use a model which was fine-tuned on a different dataset and I already have it saved in that location: /Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240605_0824/model_files/model.safetensors
     try:
         if os.path.exists(fined_tuned_dir):
             model = T5ForConditionalGeneration.from_pretrained(fined_tuned_dir)
@@ -99,11 +72,33 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
         print(f"Error loading model: {e}")
         model = T5ForConditionalGeneration.from_pretrained(model_params["MODEL"])
         print(f"Loading model from {model_params['MODEL']}")
+    # check if the output directory exists
+    if not os.path.exists(cfg["output_dir"]):
+        os.makedirs(cfg["output_dir"])
+    return model
+
+
+def get_device(model, cfg):
     # ------------------------------ load device ------------------------------
     # Set the environment variable to use specified GPUs if device is set to cuda
     # Set the environment variable to use only the n-th GPU
     # n = "0" => use the first GPU
     # n = 1 => use the second GPU
+
+    model_params = cfg["model_params"]
+
+    # Print CUDA availability information
+    try:
+        print(f"The line torch.cuda.is_available() is {torch.cuda.is_available()}")
+        print(f"CUDA Available: {torch.cuda.is_available()}")
+        print(f"CUDA Device Count: {torch.cuda.device_count()}")
+        if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+            print(f"CUDA Device Name: {torch.cuda.get_device_name(0)}")
+    except Exception as e:
+        print(f"Error checking CUDA availability: {e}")
+
+
+    train_on_multiple_gpus = cfg["train_on_multiple_gpus"]
     if cfg["device"] == "cuda" and "n_gpu" in cfg and not train_on_multiple_gpus:
         device = torch.device(f"cuda:{str(cfg['n_gpu'])}")
     else:
@@ -144,11 +139,31 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
         print(f"Using CPU, CUDA is not available")
 
     # logging
-    console.log(f"""[Model]: Loading {model_params["MODEL"]}...\n""")
+
     wandb.log({"model_loading": model_params["MODEL"]})
     print(f"Loading {model_params['MODEL']}...")
+    return model, device
 
 
+
+
+def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
+    """
+    T5 trainer
+    """
+    torch.backends.cudnn.deterministic = True
+    output_dir = cfg["output_dir"]
+    model_params = cfg["model_params"]
+    extra_tokens = cfg["extra_token"]
+
+    # tokenzier for encoding the text
+    tokenizer = T5Tokenizer.from_pretrained(model_params["MODEL"])
+    model = get_model(cfg)
+    model, device = get_device(model, cfg)
+
+    # Define the model and send it to the appropriate device
+
+    # how can I use a model which was fine-tuned on a different dataset and I already have it saved in that location: /Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240605_0824/model_files/model.safetensors
 
     # logging
     console.log(f"[Data]: Reading data...\n")

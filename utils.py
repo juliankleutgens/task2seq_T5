@@ -16,7 +16,8 @@ import numpy as np
 import os
 import dsl
 import torch
-
+import random
+import string
 from tqdm import tqdm
 from transformers import T5Tokenizer
 
@@ -479,6 +480,24 @@ def rebuild_the_line(tokens, idx_beginning, idx_end_line, path_to_mapping):
         code_line = code_line + f"   # there was an unrecognized token in the code: " + comment
     return code_line
 
+def save_generated_task(task,path):
+    def convert_to_integers(obj):
+        if isinstance(obj, dict):
+            return {k: convert_to_integers(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_to_integers(v) for v in obj]
+        else:
+            return int(obj)  # Convert to int
+
+    task = convert_to_integers(task)
+    data = {"train": task[:-1], "test": task[-1]}
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w') as f:
+        json.dump(data, f)
+
+def generate_random_name(length=8):
+    # Generates a random string of given length with letters and digits
+    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
 
 
 def reconstruct_and_execute_code(tokens, path, name, path_to_mapping):
@@ -523,6 +542,7 @@ def reconstruct_and_execute_code(tokens, path, name, path_to_mapping):
         return result
 
     try:
+        input_outputs_pairs = []
         for i, ex in enumerate(task, start=1):
             input_data = tuple(map(tuple, ex[0]))  # Assume first element is input
             output_data = tuple(map(tuple, ex[1]))  # Assume second element is output
@@ -531,10 +551,24 @@ def reconstruct_and_execute_code(tokens, path, name, path_to_mapping):
                 result['output_generated'] = True
                 if solver(input_data) == output_data:
                     result['accuracy'] += 1
+                input_data_save = list(map(list, input_data))
+                output_data_generated = list(map(list, solver(input_data)))
+                dic_input_output = {'input': input_data_save, 'output': output_data_generated}
+                input_outputs_pairs.append(dic_input_output)
             except Exception as e:
                 result['error_message'] += f'Error solving task {i}: {e}. '
                 result['output_generated'] = False
-
+            try:
+                if result['output_generated'] == True and not result['accuracy'] / len(task) == 1:
+                    gen_name = f"{name}_{generate_random_name()}"
+                    path_task = Path.cwd() / 'data' / 'training_generated' / 'X' / f'{gen_name}.json'
+                    path_solver = Path.cwd() / 'data' / 'training_generated' / 'Y' / f'{gen_name}.py'
+                    save_generated_task(input_outputs_pairs, path_task)
+                    os.makedirs(os.path.dirname(path_solver), exist_ok=True)
+                    with open(path_solver, 'w') as f:
+                        f.write(code)
+            except Exception as e:
+                result['error_message'] += f'Error saving the task and the solver: {e}. '
     except Exception as e:
         result['error_message'] += f'Unexpected error during task execution: {e}. '
 
