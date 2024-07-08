@@ -200,7 +200,7 @@ def load_data_with_T5_tokens(path='ct_schema', maxsamples=None, extra_token=['sy
         T5_tokens_list, _ = map_to_t5_token(solver, extra_token=extra_token, tokenizer=tokenizer,
                                                              loading_new_mappings=False)
         for i in task:
-            task_desc = convert2sparse(i)
+            task_desc = convert2sparse_repeated_numbers(i)
             dataset_dict['input'].append(task_desc)
             dataset_dict['target'].append(T5_tokens_list)
             dataset_dict['name'].append(name)
@@ -209,18 +209,24 @@ def load_data_with_T5_tokens(path='ct_schema', maxsamples=None, extra_token=['sy
 
 def convert_task(task, sparse_type='repeated2words'):
     task_all_pairs = ''
-    for i in task:
+    whole_task_list = []
+    for input_output_pair in task:
         if sparse_type == 'codeit':
-            #task_all_pairs += ' new pair'
-            task_desc = convert2sparse(i)
+            task_desc = codeit(input_output_pair)
+            task_all_pairs += 'new ' + task_desc
         elif sparse_type == 'repeated2words':
-            #task_all_pairs += ' new pair'
-            task_desc = convert2sparse_repeated_numbers(i)
+            task_desc = convert2sparse_repeated_numbers(input_output_pair)
+            task_all_pairs += task_desc
+        elif sparse_type == 'None':
+            task_desc = input_output_pair # this is the case when we want to keep the task as it is
+            whole_task_list += task_desc
         else:
             print('decode the task with given sparse type not found in configuration file.')
             print('Please check the configuration file, for now using: repeated2words.')
-            task_desc = convert2sparse_repeated_numbers(i)
-        task_all_pairs += task_desc
+            task_desc = convert2sparse_repeated_numbers(input_output_pair)
+            task_all_pairs += task_desc
+    if sparse_type == 'None':
+        return whole_task_list
     return task_all_pairs
 
 def load_data(path='ct_schema', maxsamples=-1, sparse_type='repeated2words'):
@@ -240,7 +246,7 @@ def load_data(path='ct_schema', maxsamples=-1, sparse_type='repeated2words'):
     """
 
     # Extract dataset name using regular expression
-    dataset_name_match = re.search(r'(training_data|abstraction-and-reasoning-challenge|reverse_engineering|data_test)',
+    dataset_name_match = re.search(r'(training|abstraction-and-reasoning-challenge|reverse_engineering|data_test)',
                                    path)
     dataset_name = dataset_name_match.group() if dataset_name_match else None
 
@@ -256,7 +262,7 @@ def load_data(path='ct_schema', maxsamples=-1, sparse_type='repeated2words'):
 
     # Function dispatching
     read_functions = {
-        'training_data': _read_generated_json_files_separately,
+        'training': _read_generated_json_files_separately,
         'abstraction-and-reasoning-challenge': _read_arc_json_files,
         'reverse_engineering': _read_reverse_engineering_json_files
     }
@@ -276,6 +282,7 @@ def load_data(path='ct_schema', maxsamples=-1, sparse_type='repeated2words'):
             counter += 1
             continue
         trimmed_func = solver
+
         task_all_pairs = convert_task(task, sparse_type=sparse_type)
         dataset_dict['input'].append(task_all_pairs)
         dataset_dict['target'].append(trimmed_func)
@@ -338,5 +345,5 @@ def _read_generated_json_files_separately(path: str, max_sampels:int) -> List[Ta
 if __name__ == "__main__":
     extra_token = ['sym_aft_func', 'BoF', 'EoF', 'var_to_num']
 
-    dataset_dict = load_data(path='ct_schema', maxsamples=10, extra_token=extra_token)
-    print(dataset_dict)
+    #dataset_dict = load_data(path='ct_schema', maxsamples=10, extra_token=extra_token)
+    #print(dataset_dict)

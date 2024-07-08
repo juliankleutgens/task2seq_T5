@@ -14,10 +14,10 @@ test_paths:
   - '/Users/juliankleutgens/PycharmProjects/task2seq_T5/data_test/or_schema'
   - '/Users/juliankleutgens/PycharmProjects/arc-dsl-main/abstraction-and-reasoning-challenge/training'
 
-load_new_mappings: false
+load_new_mappings: true
 type_of_mapping: 'val2alphabet'
 
-sparse_type: 'repeated2words'
+sparse_type: 'codeit'
 
 device: 'cpu'
 train_on_multiple_gpus: false

@@ -7,7 +7,7 @@ train_paths:
   - '/home/jkleutgens/training_data'
   - '/home/jkleutgens/reverse_engineering/generated_tasks'
 
-test_mode: false
+test_mode: true
 
 test_paths:
   - '/home/jkleutgens/data_test/ct_schema'
@@ -16,15 +16,14 @@ test_paths:
   - '/home/jkleutgens/arc-dsl-main/abstraction-and-reasoning-challenge/training'
 
 load_new_mappings: true
-type_of_mapping: 'val2alphabet'
+type_of_mapping: 'codeit'
 
 device: 'cuda'
-train_on_multiple_gpus: true
+train_on_multiple_gpus: false
 n_gpu: 0
 
 
 sparse_type: 'repeated2words'
-
 output_dir: './outputs/'
 
 extra_token:

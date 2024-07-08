@@ -159,8 +159,10 @@ def read_solver_file(path):
 def decode_json_task(file_path: str) -> Task:
     with open(file_path) as f:
         data = json.load(f)
-
-    examples = data["train"] + data["test"]
+    if type(data["test"]) == dict:
+        examples = data["train"] + [data["test"]]
+    else:
+        examples = data["train"] + data["test"]
 
     task: Task = []
     for example in examples:
@@ -263,12 +265,13 @@ def number_to_color(number):
 def get_tokens_from_task_encoder():
     # in this function we will pass the task tokens and get the tokens that are not to be mapped to
     # since the task to T5 tokens is a standard mapping, we have a constant and fix tokens which are use
-    special_sym = ['</s>', '▁new', '|', ';', '|', 'x', '▁pair', '▁input', '▁output']
+    special_sym = ['</s>', '▁new', '|', ';', '|', 'x', '▁pair', '▁input', '▁output', 'b', 'g', '=']
     word_numbers = ['▁zero', '▁one', '▁two', '▁three', '▁four', '▁five', '▁six', '▁seven', '▁eight', '▁nine', '▁ten']
     # the numbers 0 till 50 as a sting in a list
     color_words = ['▁Black', '▁Blue', '▁Red', '▁Green', '▁Yellow', '▁Gray', '▁Purple', '▁Orange', '▁Azure', '▁Brown', '▁White']
     numbers = [str(i) for i in range(51)]
-    return special_sym + word_numbers + numbers + color_words
+    numbers_ = ['▁' + str(i) for i in range(51)]
+    return special_sym + word_numbers + numbers + color_words + numbers_
 
 
 def convert2sparse_repeated_numbers(task):
@@ -276,7 +279,7 @@ def convert2sparse_repeated_numbers(task):
         # Get the dimensions of the narray
         dim_ = narray.shape
         # Create a flattened string representation of the narray with color indexes
-        flatgrid_str = f"{dim_[0]}x{dim_[1]}:  "
+        #flatgrid_str = f"{dim_[0]}x{dim_[1]}:  "
         flatgrid_str = ''
         for row_ in narray:
             idx = 0
@@ -309,12 +312,12 @@ def load_token_mappings_utils(filename="dsl_token_mappings_T5.json"):
         print("No existing token mappings found.")
         return None
 
-def convert2sparse(task):
+def codeit(task):
     def fromTuple(tuple_):
         dim_ = (len(tuple_),len(tuple_[0]))
         color_ = set(sum(tuple_,()))
         color_indx = {color: index for index, color in enumerate(color_)}
-        flatgrid_str = ''
+        flatgrid_str = ""
         for row_ in tuple_:
             row_ = tuple(color_indx[elem] for elem in row_)
             flatgrid_str = flatgrid_str + ' ' + str(row_)[1:-1].replace(" ", "")
@@ -327,16 +330,21 @@ def convert2sparse(task):
 
         # Find unique colors and assign indexes
         unique_colors = np.unique(narray)
-        color_indx = {color: index for index, color in enumerate(unique_colors)}
+        # what is the most frequent color?
+        color_count = Counter(narray.flatten())
+        most_frequent_color = color_count.most_common(1)[0][0]
 
         # Create a flattened string representation of the narray with color indexes
-        flatgrid_str = ''
-        for row_ in narray:
-            indexed_row = [color_indx[elem] for elem in row_]
-            flatgrid_str += ' ' + ', '.join(map(str, indexed_row))
+        color_positions = {color: '' for color in unique_colors}
+        for row_idx, row_ in enumerate(narray):
+            for col_idx, elem in enumerate(row_):
+                if elem == most_frequent_color:
+                    continue
+                color_positions[elem] += f'{row_idx},{col_idx} '
 
         # Format output string
-        out = f"{dim_[0]}x{dim_[1]} bg=" + ' '.join(map(str, unique_colors)) + '=' + flatgrid_str[1:]
+        out = f"{dim_[0]}x{dim_[1]} bg=" + number_to_color(most_frequent_color) + ' '
+        out += ' '.join(f"{number_to_color(color)}={color_positions[color].strip()}" for color in unique_colors if color != most_frequent_color)
         return out
 
     if isinstance(task, dict):
