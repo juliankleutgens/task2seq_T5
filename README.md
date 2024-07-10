@@ -104,7 +104,7 @@ The `config.yaml` file specifies several hyperparameters and settings for traini
 **Device Configuration:**
 - `device`: The device to run the model on (e.g., `cuda` for GPU).
 - `train_on_multiple_gpus`: Boolean to indicate if training should be done on multiple GPUs (e.g., `false`).
-- `n_gpu`: Number of GPUs to use if `train_on_multiple_gpus` is true (e.g., `0`).
+- `n_gpu`: Number of GPUs to use if `train_on_multiple_gpus` is true (e.g., `0`). If one uses `train_on_multiple_gpus: True` the `n_gpu` should enumerate which GPUs to use like (e.g., `- 0 - 1`
 
 **Training Details:**
 - `sparse_type`: Type of sparse representation (e.g., `repeated2words` or `codeit`).
@@ -129,3 +129,6 @@ The `config.yaml` file specifies several hyperparameters and settings for traini
 - `SEED`: Random seed for reproducibility (e.g., `42`).
 - `NUM_BEAMS`: Number of beams for beam search (e.g., `15`).
 - `fined_tuned_dir`: Directory where the fine-tuned model is saved (e.g., `/home/jkleutgens/task2seq_T5/outputs/output_20240618_2121/model_files`).
+
+Note that if one uses an already fine-tuned model from a specific file in `fined_tuned_dir`, this overwrites the `MODEL` and also copies the mappings used for training this model. So, no new mapping is generated. 
+
