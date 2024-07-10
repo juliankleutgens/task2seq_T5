@@ -83,3 +83,49 @@ data/
 
 ### Hyperparamter in `config.yaml` File: 
 
+### Hyperparameters in `config.yaml` File:
+
+The `config.yaml` file specifies several hyperparameters and settings for training and evaluating the model. Below is an explanation of each key parameter:
+
+**General Parameters:**
+- `max_samples`: The maximum number of samples to use for training (e.g., `5000`).
+- `test_samples`: The number of samples to use for testing (e.g., `10000`).
+- `num_of_itr`: Number of iterations for the training loop (e.g., `5`).
+
+**Paths:**
+- `train_paths`: List of paths where the training data is located.
+- `test_paths`: List of paths where the testing data is located.
+
+**Mode and Data Loading:**
+- `test_mode`: Boolean to indicate if the test mode is active, then the `config_test.yaml` file is overwriting the configurations (e.g., `true`).
+- `load_new_mappings`: Boolean to decide if new mappings should be loaded (e.g., `true`).
+- `type_of_mapping`: Specifies the type of mapping to be used (e.g., `val2alphabet`).
+
+**Device Configuration:**
+- `device`: The device to run the model on (e.g., `cuda` for GPU).
+- `train_on_multiple_gpus`: Boolean to indicate if training should be done on multiple GPUs (e.g., `false`).
+- `n_gpu`: Number of GPUs to use if `train_on_multiple_gpus` is true (e.g., `0`).
+
+**Training Details:**
+- `sparse_type`: Type of sparse representation (e.g., `repeated2words` or `codeit`).
+- `output_dir`: Directory to save the output files (e.g., `./outputs/`).
+
+**Extra Tokens:**
+- `extra_token`: List of extra tokens to be used in the representation and then the tokenization (must be: `['sym_aft_func', 'EoF', 'BoF']`).
+
+**Loss and Prompting:**
+- `weighted_loss`: Boolean indicating if a weighted loss should be used after 70% of the iterations in an epoch. The generated tokens at the beginning of the sequence are weighted more compared to the others (a scalar is linearly interpolated between 1.5 and 0.5) (e.g., `False`).
+- `prompting`: Boolean indicating if the prompting trick is used. In this trick, the first few tokens of the output sequence, which are the same in any case, are appended at the end of the input sequence (e.g., `False`).
+
+**Model Parameters:**
+- `MODEL`: The model name or path (e.g., `t5-small`).
+- `TRAIN_BATCH_SIZE`: Batch size for training (e.g., `8`).
+- `VALID_BATCH_SIZE`: Batch size for validation (e.g., `8`).
+- `TRAIN_EPOCHS`: Number of epochs for training (e.g., `2`).
+- `VAL_EPOCHS`: Number of epochs for validation (e.g., `1`).
+- `LEARNING_RATE`: Learning rate for the optimizer (e.g., `1.0e-4`).
+- `MAX_SOURCE_TEXT_LENGTH`: Maximum length of the source text (e.g., `1024`).
+- `MAX_TARGET_TEXT_LENGTH`: Maximum length of the target text (e.g., `1024`).
+- `SEED`: Random seed for reproducibility (e.g., `42`).
+- `NUM_BEAMS`: Number of beams for beam search (e.g., `15`).
+- `fined_tuned_dir`: Directory where the fine-tuned model is saved (e.g., `/home/jkleutgens/task2seq_T5/outputs/output_20240618_2121/model_files`).
