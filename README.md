@@ -107,7 +107,9 @@ The `config.yaml` file specifies several hyperparameters and settings for traini
 - `n_gpu`: Number of GPUs to use if `train_on_multiple_gpus` is true (e.g., `0`). If one uses `train_on_multiple_gpus: True` the `n_gpu` should enumerate which GPUs to use like (e.g., `- 0 - 1`)
 
 **Training Details:**
-- `sparse_type`: Type of sparse representation (e.g., `repeated2words` or `codeit`).
+- `sparse_type`: Type of sparse representation of a ARC task (e.g., `repeated2words` or `codeit`).
+- `codeit`: The position of every square with a non-background color is written out in integers.
+- `repeated2words`: Write down the color of the squares from the top left to the bottom right. If a color is repeated more than 3 times, the squares are represented as "IntxColor" (e.g., "3xBlack").
 - `output_dir`: Directory to save the output files (e.g., `./outputs/`).
 
 **Extra Tokens:**
@@ -126,9 +128,8 @@ The `config.yaml` file specifies several hyperparameters and settings for traini
 - `LEARNING_RATE`: Learning rate for the optimizer (e.g., `1.0e-4`).
 - `MAX_SOURCE_TEXT_LENGTH`: Maximum length of the source text (e.g., `1024`).
 - `MAX_TARGET_TEXT_LENGTH`: Maximum length of the target text (e.g., `1024`).
-- `SEED`: Random seed for reproducibility (e.g., `42`).
 - `NUM_BEAMS`: Number of beams for beam search (e.g., `15`).
-- `fined_tuned_dir`: Directory where the fine-tuned model is saved (e.g., `/home/jkleutgens/task2seq_T5/outputs/output_20240618_2121/model_files`).
+- `fined_tuned_dir`: Directory where the fine-tuned model is saved (e.g., `/home/jkleutgens/task2seq_T5/outputs/output_20240618_2121/model_files` or `None`).
 
 Note that if one uses an already fine-tuned model from a specific file in `fined_tuned_dir`, this overwrites the `MODEL` and also copies the mappings used for training this model. So, no new mapping is generated. 
 
