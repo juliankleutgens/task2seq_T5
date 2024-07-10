@@ -1,11 +1,11 @@
-### Abstract:
+## Abstract:
 
 Humans can generalize sparse experiences into principles and apply them in unfamiliar contexts. In contrast, artificial agents often struggle in novel situations, even with large amounts of data. François Chollet argues this happens because artificial agents are trained to be skillful rather than genuinely intelligent. To address this and steer research toward true AI, he introduced the Abstraction and Reasoning Corpus (ARC), a benchmark designed to measure general intelligence. The ARC dataset evaluates a system’s ability to deduce rules from limited input-output pairs and apply them to new, unseen data.
 In this repository is a method using a Domain Specific Language (DSL) to represent solutions for ARC tasks. This involves training Large Language Models (LLMs) to generate DSL programs based on ARC dataset input-output pairs. 
 This approach is using the T5 model, a pre-trained LLM, to generate the DSL solvers.
 Results show the T5 model can learn to generate correct and generalizable DSL solvers, though challenges remain in achieving high accuracy and consistent output generation.
 
-### Setup the Environment for this Repo:
+## Setup the Environment for this Repo:
 **Prerequisites**
 
 - Python 3.6 or higher
@@ -49,10 +49,10 @@ Results show the T5 model can learn to generate correct and generalizable DSL so
    pip install omegaconf torchsummary numpy pandas transformers rich wandb fuzzywuzzy sentencepiece matplotlib rouge nltk rapidfuzz inflect Levenshtein
    ```
 
-### Configuration
+## Configuration
 In the folder "configuration," there are two files: `config.yaml` (used for running on the GPU server with different data addresses) and `config_test.yaml` (used for running the code on my local computer with a CPU). This distinction is made to save time when pushing/pulling and debugging. To use `config_test.yaml`, set `test_mode: true` in `config.yaml`.
 
-### Data Structure
+## Data Structure
 The data should be structured in two ways:
 
 1. Save each task as a separate JSON file with the ID in the file name (e.g., `y65h51dw.json`). Then, save all the solvers in one large `solvers.py` file, where you can find the `def solver_y65h51dw` function.
@@ -79,11 +79,81 @@ data/
 ```
 
 
-### Code Structure: 
+## Code Structure: 
 <img width="1253" alt="Screenshot 2024-07-10 at 14 43 50" src="https://github.com/juliankleutgens/task2seq_T5/assets/164042205/8936a55e-7412-4a75-92f9-04fcc5c1dc8e">
+Certainly! Here’s a more detailed breakdown of the code structure and functionality for each script without any bold formatting:
 
+### 1. main.py
+Function:
+- This is the entry point of the application. It coordinates the overall workflow.
 
-### Hyperparameters in `config.yaml` File:
+Details:
+- Initialization: Loads the configuration settings from `config.yaml` or `config_test.yaml` depending on the mode.
+- Data Loading: Calls functions from `get_datasetframe.py` to load and preprocess the dataset into a dataframe.
+- Training: Initializes the training process by calling functions from `trainer.py`.
+- Evaluation: Post-training, it triggers the evaluation process handled by `engine.py`.
+- Logging: Directs output to log files and handles any additional logging setup for monitoring (e.g., wandb).
+
+### 2. get_datasetframe.py
+Function:
+- Loads and preprocesses the dataset, transforming it into a dataframe format.
+
+Details:
+- Load Data: Reads JSON files containing ARC tasks and organizes them.
+- Dataframe Creation: Converts the loaded data into a dataframe for easy manipulation and access.
+- Configuration Handling: Adjusts data loading paths and settings based on the provided configuration, distinguishing between training and testing modes.
+
+### 3. dataloader.py
+Function:
+- Tokenizes the data and prepares it for training.
+
+Details:
+- Tokenization: Converts input-output pairs from the dataframe into tokenized formats that the model can process.
+- Batching: Groups data into batches, ensuring they are correctly formatted for model input.
+- Data Augmentation: Applies any necessary data transformations or augmentations as specified in the configuration.
+
+### 4. trainer.py
+Function:
+- Manages the training process of the model.
+
+Details:
+- Model Initialization: Sets up the T5 model or any specified model architecture for training.
+- Training Loop: Implements the main training loop, including forward passes, loss calculation, and backpropagation.
+- Optimization: Uses specified optimizers and learning rate schedules to update model weights.
+- Checkpointing: Saves model checkpoints periodically for recovery and later use.
+- Metrics Monitoring: Tracks and logs training metrics for performance evaluation.
+
+### 5. engine.py
+Function:
+- Handles inference and evaluation of the trained model.
+
+Details:
+- Model Loading: Loads the trained model from the saved checkpoints.
+- Inference: Applies the model to new, unseen data to generate predictions.
+- Evaluation: Compares model predictions with ground truth to assess performance.
+- Logging: Writes evaluation results to output log files and uploads them to platforms like wandb.com for visualization and further analysis.
+
+### 6. output.log & wandb.com
+Function:
+- Collects and stores logs and results from the training and evaluation processes.
+
+Details:
+- Logging: Aggregates logs from different stages of the workflow, including training metrics, evaluation scores, and any error messages.
+- Visualization: Provides tools and interfaces for visualizing training progress and evaluation results.
+- Monitoring: Enables continuous monitoring of model performance and health during the training and evaluation phases.
+
+### Data Flow and Interaction
+
+- Data Ingestion: The process begins with `main.py`, which initiates data loading through `get_datasetframe.py`.
+- Preprocessing: `get_datasetframe.py` loads raw data and converts it into a structured dataframe.
+- Tokenization: `dataloader.py` tokenizes this data and prepares it for the model.
+- Training: `trainer.py` takes the tokenized data and runs the training loop, saving models periodically.
+- Evaluation: Post-training, `engine.py` loads the trained model and performs inference on new data, evaluating the model's performance.
+- Logging: Throughout this workflow, logs and results are collected and stored in `output.log` and optionally sent to `wandb.com` for further analysis.
+
+This structure ensures a clear separation of concerns, with each script focusing on a specific aspect of the workflow. This modularity facilitates easier debugging, maintenance, and extension of the codebase.
+
+## Hyperparameters in `config.yaml` File:
 
 The `config.yaml` file specifies several hyperparameters and settings for training and evaluating the model. Below is an explanation of each key parameter:
 
