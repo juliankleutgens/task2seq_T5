@@ -23,8 +23,6 @@ Results show the T5 model can learn to generate correct and generalizable DSL so
 
 2. **Activate the Conda Environment:**
 
-   Activate the newly created environment:
-
    ```bash
    conda activate task2seq
    ```
