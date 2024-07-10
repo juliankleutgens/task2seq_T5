@@ -111,20 +111,12 @@ data/
 ### 6. output.log & wandb.com
 Function:
 - The results are plotted with Weights and Baises for each Validation set
-- The generated Data is saved in CSV file for further inspection in the output folder
-   - Saved is the following for every sample: predictions, actuals, avg_bleu_score, bleu_scores, avg_levenshtein_distance, levenshtein_distances, names, codes, accuracies, codes_reconstructed, codes_initializable, outputs_generated, errors, percent_of_seen_pairs  
+- The generated data is saved in a CSV file for further inspection in the output folder.
+   - The following data is saved for every sample: epoch, predictions, actuals, average BLEU score, BLEU scores, average Levenshtein distance, Levenshtein distances, names, codes, accuracies, reconstructed codes, initializable codes, generated outputs, errors, and the percentage of seen pairs.
+   - Additionally, the generated solvers that do not solve the task but generate different output grids are saved in the folder `data/training_generated/` along with the corresponding JSON file and solver.py file.
 
-  
-### Data Flow and Interaction
-
-- Data Ingestion: The process begins with `main.py`, which initiates data loading through `get_datasetframe.py`.
-- Preprocessing: `get_datasetframe.py` loads raw data and converts it into a structured dataframe.
-- Tokenization: `dataloader.py` tokenizes this data and prepares it for the model.
-- Training: `trainer.py` takes the tokenized data and runs the training loop, saving models periodically.
-- Evaluation: Post-training, `engine.py` loads the trained model and performs inference on new data, evaluating the model's performance.
-- Logging: Throughout this workflow, logs and results are collected and stored in `output.log` and optionally sent to `wandb.com` for further analysis.
-
-This structure ensures a clear separation of concerns, with each script focusing on a specific aspect of the workflow. This modularity facilitates easier debugging, maintenance, and extension of the codebase.
+### Reading the CSV file
+To analyze the CSV file, I have used the script `print_and_plot/print_csv.py`. This script allows filtering based on different metrics.
 
 ## Hyperparameters in `config.yaml` File:
 
