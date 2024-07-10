@@ -1,8 +1,8 @@
 ### Abstract:
 
 Humans can generalize sparse experiences into principles and apply them in unfamiliar contexts. In contrast, artificial agents often struggle in novel situations, even with large amounts of data. François Chollet argues this happens because artificial agents are trained to be skillful rather than genuinely intelligent. To address this and steer research toward true AI, he introduced the Abstraction and Reasoning Corpus (ARC), a benchmark designed to measure general intelligence. The ARC dataset evaluates a system’s ability to deduce rules from limited input-output pairs and apply them to new, unseen data.
-A key contribution is developing a methodology using a Domain Specific Language (DSL) to represent solutions for ARC tasks. This involves training Large Language Models (LLMs) to generate DSL programs based on ARC dataset input-output pairs. 
-Recognizing this approach’s limitations, the research shifts to using the T5 model, a pre-trained LLM, to generate DSL solvers.
+In this repository is a method using a Domain Specific Language (DSL) to represent solutions for ARC tasks. This involves training Large Language Models (LLMs) to generate DSL programs based on ARC dataset input-output pairs. 
+This approach is using the T5 model, a pre-trained LLM, to generate the DSL solvers.
 Results show the T5 model can learn to generate correct and generalizable DSL solvers, though challenges remain in achieving high accuracy and consistent output generation.
 
 ### Setup the Environment for this Repo:
@@ -81,4 +81,5 @@ data/
 ```
 
 
-   
+### Hyperparamter in `config.yaml` File: 
+
