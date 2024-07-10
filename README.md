@@ -104,7 +104,7 @@ The `config.yaml` file specifies several hyperparameters and settings for traini
 **Device Configuration:**
 - `device`: The device to run the model on (e.g., `cuda` for GPU).
 - `train_on_multiple_gpus`: Boolean to indicate if training should be done on multiple GPUs (e.g., `false`).
-- `n_gpu`: Number of GPUs to use if `train_on_multiple_gpus` is true (e.g., `0`). If one uses `train_on_multiple_gpus: True` the `n_gpu` should enumerate which GPUs to use like (e.g., `- 0 - 1`
+- `n_gpu`: Number of GPUs to use if `train_on_multiple_gpus` is true (e.g., `0`). If one uses `train_on_multiple_gpus: True` the `n_gpu` should enumerate which GPUs to use like (e.g., `- 0 - 1`)
 
 **Training Details:**
 - `sparse_type`: Type of sparse representation (e.g., `repeated2words` or `codeit`).
