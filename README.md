@@ -113,10 +113,10 @@ Function:
 - The results are plotted with Weights and Baises for each Validation set
 - The generated data is saved in a CSV file for further inspection in the output folder.
    - The following data is saved for every sample: epoch, predictions, actuals, average BLEU score, BLEU scores, average Levenshtein distance, Levenshtein distances, names, codes, accuracies, reconstructed codes, initializable codes, generated outputs, errors, and the percentage of seen pairs.
-   - Additionally, the generated solvers that do not solve the task but generate different output grids are saved in the folder `data/training_generated/` along with the corresponding JSON file and solver.py file.
+   - Additionally, the generated solvers that do not solve the task but generate different output grids are saved in the folder `data/training_generated/` along with the corresponding JSON file and solver.py file. 
 
 ### Reading the CSV file
-To analyze the CSV file, I have used the script `print_and_plot/print_csv.py`. This script allows filtering based on different metrics.
+To analyze the CSV file, I have used the script `print_and_plot/print_csv.py`. This script allows filtering based on different metrics. And to plot the generated solvers wihich lead to different output grids (saved in the folder `data/training_generated/`), one can use `print_and_plot/print_task.py`. 
 
 ## Hyperparameters in `config.yaml` File:
 
