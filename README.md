@@ -42,22 +42,32 @@ Results show the T5 model can learn to generate correct and generalizable DSL so
    ```
 
 ### Configuration
-In the Folder "configuration" is the file config.ymal (the used configuration for running on the GPU Server with different data addresses) and config_test.ymal (for running the code on my local computer with a CPU). I made this difference simply to save time, when I push/pull and debug everything. For using the config_test.ymal one must set test_mode: true in the config.ymal. 
+In the folder "configuration," there are two files: `config.yaml` (used for running on the GPU server with different data addresses) and `config_test.yaml` (used for running the code on my local computer with a CPU). This distinction is made to save time when pushing/pulling and debugging. To use `config_test.yaml`, set `test_mode: true` in `config.yaml`.
 
-### Data Structure 
+### Data Structure
+The data should be structured in two ways:
+
+1. Save each task as a separate JSON file with the ID in the file name (e.g., `y65h51dw.json`). Then, save all the solvers in one large `solvers.py` file, where you can find the `def solver_y65h51dw` function.
+2. Save both tasks and solvers separately. So, store the task in the /X/ folder, such as 0k99no11.json, and put the corresponding solver function file into 0k99no11.py. For the script to recognize this structure, include "training" in the folder name. If you don't want to label it with "training," update the method name in the load_data function in data_scripts/get_datasetframe.py.
 
 ```
 data/
-├── ct_schema/
+├── arc_tasks/
 │   ├── tasks/
-│   ├── mapping.json
+│   │   ├── y65h51dw.json
+│   │   ├── ... 
 │   ├── solvers.py
-├── ct_schema_all/
-├── gl_schema/
-├── or_schema/
-├── training_generated/
+├── arc_tasks_2/
+├── arc_tasks_test/
+├── training_arc_task/
 │   ├── X/
+│   │   ├── 0k99no11.json
+│   │   ├── 1r0ig26z.json
+│   │   ├── ... 
 │   ├── Y/
+│   │   ├── 0k99no11.py
+│   │   ├── 1r0ig26z.py
+│   │   ├── ... 
 ```
 
 
