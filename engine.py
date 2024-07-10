@@ -19,7 +19,7 @@ from tqdm import tqdm
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
 import os
-from get_datasetframe import *
+from data_scripts.get_datasetframe import *
 # Importing the T5 modules from huggingface/transformers
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 
@@ -29,7 +29,7 @@ from rich.console import Console
 from utils import *
 from torch import cuda
 from torch.optim.lr_scheduler import StepLR
-from T5mapping import *
+from tokenization.T5mapping import *
 from torch.utils.data import DataLoader, Subset
 import random
 from rich import box
@@ -37,7 +37,7 @@ from rich.console import Console
 from rich.table import Table
 import wandb
 import Levenshtein
-from dataloader import DataSetClass
+from data_scripts.dataloader import DataSetClass
 from utils import *
 
 
@@ -57,7 +57,10 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
     # Initialize the learning rate scheduler
     scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=10, T_mult=2)
     iterations = cfg["num_of_itr"] if cfg["num_of_itr"] != -1 else len(loader)
-    # ------------------- Training Loop -------------------
+
+
+    # ---------------------------- Training Loop ---------------------------- #
+    # ----------------------------------------------------------------------- #
     iter_70_percent = int(len(loader) * 0.7)
 
     # Add tqdm progress bar for the training loop
@@ -65,7 +68,6 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
         if step > cfg["num_of_itr"] and cfg["num_of_itr"] != -1:
             print(f"Number of iterations {step} reached. Stopping the training")
             break
-
         y = data['target_ids'].to(device, dtype=torch.long)
         y_ids = y[:, :-1].contiguous()
         lm_labels = y[:, 1:].clone().detach()
@@ -110,7 +112,8 @@ def train_and_validate(epoch, tokenizer, model, device, loader, optimizer, conso
         model.save_pretrained(path)
     tokenizer.save_pretrained(path)
 
-    # ------------------- Validation Loop -------------------
+    # ---------------------------- Validation Loop ---------------------------- #
+    # ------------------------------------------------------------------------- #
     if not epoch % (cfg["model_params"]["VAL_EPOCHS"]) == 0:
         return 0,0,0
     # evaluating test dataset

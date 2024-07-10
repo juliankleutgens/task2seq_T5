@@ -20,7 +20,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
 import os
-from get_datasetframe import *
+from data_scripts.get_datasetframe import *
 # Importing the T5 modules from huggingface/transformers
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 
@@ -29,25 +29,28 @@ from rich import box
 from rich.console import Console
 from utils import *
 from torch import cuda
-from T5mapping import *
+from tokenization.T5mapping import *
 from torch.utils.data import DataLoader, Subset
 import random
 from rich import box
 from rich.console import Console
 from rich.table import Table
 import wandb
-from dataloader import DataSetClass
-from trainer import  display_df, T5Trainer
+from data_scripts.dataloader import DataSetClass
+from trainer import display_df, T5Trainer
 import yaml
 
 # ------------------- load config -------------------
-with open("config.yaml", "r") as file:
+# the config file is it configuration/config.yaml
+os.makedirs("configuration", exist_ok=True)
+# open directly the config.yaml file
+with open("configuration/config.yaml", "r") as file:
     yaml_cfg = yaml.safe_load(file)
 cfg = OmegaConf.create(yaml_cfg)
 
 test_mode = cfg["test_mode"] # set to True if you want to test the code on your local computer
 if test_mode:
-    with open("config_test.yaml", "r") as file:
+    with open("configuration/config_test.yaml", "r") as file:
         yaml_cfg = yaml.safe_load(file)
     cfg = OmegaConf.create(yaml_cfg)
     print("Test mode is on")

@@ -41,7 +41,7 @@ model_params:
   MAX_TARGET_TEXT_LENGTH: 512
   SEED: 42
   NUM_BEAMS: 15
-  fined_tuned_dir: '/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240618_2121/model_files'
+  fined_tuned_dir: None #'/Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240618_2121/model_files'
 
 weighted_loss: False
 prompting: False

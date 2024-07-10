@@ -1,9 +1,9 @@
-from T5mapping import *
+from tokenization.T5mapping import *
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 from tqdm import tqdm
 import os
 from typing import List
-from constants import Task
+from DSL.constants import Task
 from utils import *
 import inflect
 
@@ -343,7 +343,10 @@ def _read_generated_json_files_separately(path: str, max_sampels:int) -> List[Ta
 
 
 if __name__ == "__main__":
-    extra_token = ['sym_aft_func', 'BoF', 'EoF', 'var_to_num']
-
-    #dataset_dict = load_data(path='ct_schema', maxsamples=10, extra_token=extra_token)
-    #print(dataset_dict)
+    df = load_data(path='/Users/juliankleutgens/training_data', maxsamples=-1, sparse_type='None')
+    names = df['name']
+    for i in range(len(names)):
+        name = names[i]
+        path_to_file = '/Users/juliankleutgens/training_data/X/' + name + '.json'
+        path_to_image = '/Users/juliankleutgens/PycharmProjects/LLaVA/ARC_tasks_images/' + name + '.png'
+        images = from_json_to_single_padded_image(file_path=path_to_file, output_image_path=path_to_image)

@@ -15,7 +15,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
 import os
-from get_datasetframe import *
+from data_scripts.get_datasetframe import *
 # Importing the T5 modules from huggingface/transformers
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 
@@ -25,14 +25,14 @@ from rich import box
 from rich.console import Console
 from utils import *
 from torch import cuda
-from T5mapping import *
+from tokenization.T5mapping import *
 from torch.utils.data import DataLoader, Subset
 import random
 from rich import box
 from rich.console import Console
 from rich.table import Table
 import wandb
-from dataloader import DataSetClass
+from data_scripts.dataloader import DataSetClass
 from engine import train_and_validate, validate
 import matplotlib.pyplot as plt
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -144,7 +144,20 @@ def get_device(model, cfg):
     print(f"Loading {model_params['MODEL']}...")
     return model, device
 
-
+    # Plot the metrics for the training
+def plot_metrics(all_metrics, metric_name, output_dir):
+    """Plot the metrics"""
+    plt.figure()
+    for column in all_metrics.columns:
+        if column == 'epoch':
+            continue
+        plt.plot(all_metrics[column], label=column)
+    plt.xlabel('Epoch')
+    plt.ylabel(metric_name)
+    plt.title(f'{metric_name} over Epochs')
+    plt.legend()
+    plt.savefig(os.path.join(output_dir, f'{metric_name}_metrics.png'))
+    plt.show()
 
 
 def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
@@ -193,15 +206,10 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
         val_dataset = dataframe_test.reset_index(drop=True)
         console.print(f"TEST Dataset: {val_dataset.shape}\n")
         val_set = DataSetClass(val_dataset, tokenizer, model_params["MAX_SOURCE_TEXT_LENGTH"],
-                                   model_params["MAX_TARGET_TEXT_LENGTH"], extra_tokens,cfg=cfg)
-
-
-        val_params = {
-                'batch_size': model_params["VALID_BATCH_SIZE"],
-                'shuffle': False,
-                'num_workers': 0}
-
-
+                                model_params["MAX_TARGET_TEXT_LENGTH"], extra_tokens,cfg=cfg)
+        val_params = {'batch_size': model_params["VALID_BATCH_SIZE"],
+                      'shuffle': False,
+                      'num_workers': 0}
         val_loader = DataLoader(val_set, **val_params)
         val_loader_list.append(val_loader)
 
@@ -245,23 +253,6 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
     console.print(
         f"""[Validation] Generation on Validation data saved @ {os.path.join(output_dir, 'predictions.csv')}\n""")
     console.print(f"""[Logs] Logs saved @ {os.path.join(output_dir, 'logs.txt')}\n""")
-
-
-
-    # Plot the metrics for the training
-    def plot_metrics(all_metrics, metric_name, output_dir):
-        """Plot the metrics"""
-        plt.figure()
-        for column in all_metrics.columns:
-            if column == 'epoch':
-                continue
-            plt.plot(all_metrics[column], label=column)
-        plt.xlabel('Epoch')
-        plt.ylabel(metric_name)
-        plt.title(f'{metric_name} over Epochs')
-        plt.legend()
-        plt.savefig(os.path.join(output_dir, f'{metric_name}_metrics.png'))
-        plt.show()
 
     console.log(f"[Plotting Metrics]...\n")
     plot_metrics(all_metrics_blue, 'BLEU Score', output_dir)

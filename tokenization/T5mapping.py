@@ -1,5 +1,4 @@
-import dsl
-from representation import *
+from tokenization.representation import *
 from tqdm import tqdm
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 from transformers import T5Tokenizer

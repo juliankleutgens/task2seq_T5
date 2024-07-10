@@ -7,16 +7,16 @@ import json
 import tqdm
 import random
 import zipfile
-from get_datasetframe import load_data
+from data_scripts.get_datasetframe import load_data
 
 import pandas as pd
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, Normalize
 
-from dsl import *
-from constants import *
-from arc_types import *
+from DSL.dsl import *
+from DSL.constants import *
+from DSL.arc_types import *
 
 from typing import Dict, List, Tuple, Optional
 

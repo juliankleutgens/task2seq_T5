@@ -1,4 +1,4 @@
-from get_datasetframe import *
+from data_scripts.get_datasetframe import *
 from transformers import T5Tokenizer
 import matplotlib.pyplot as plt
 

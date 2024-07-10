@@ -10,11 +10,11 @@ import re
 from pathlib import Path
 from collections import Counter
 from typing import List, Optional
-from constants import COLORMAP, NORM, TASK_DICT, Example, Task
+from DSL.constants import COLORMAP, NORM, TASK_DICT, Example, Task
 from numpy.typing import NDArray
 import numpy as np
 import os
-import dsl
+import DSL.dsl
 import torch
 import random
 import string
@@ -134,7 +134,7 @@ def reformat_dsl_code(original_code, extra_token = None):
 
 def get_all_dsl_tokens():
     # Get all functions from the DSL module
-    dsl_functions = inspect.getmembers(dsl, inspect.isfunction)
+    dsl_functions = inspect.getmembers(DSL.dsl, inspect.isfunction)
     # Extract the function names
     dsl_tokens = [func[0] for func in dsl_functions]
     return dsl_tokens
@@ -629,6 +629,102 @@ def small_trick(our_token_sample, extra_tokens):
         our_token_sample[0] = '#newline'
         our_token_sample[1] = 'x1'
     return our_token_sample
+
+
+import numpy as np
+from PIL import Image
+import json
+
+def from_json_to_single_padded_image(
+    file_path: str, max_input_output_pairs: int = 4,
+    grid_size: int = 30, padding_value: int = 10, verbose: bool = True,
+    output_image_path: str = 'output.png'
+) -> NDArray[np.uint8]:
+    """
+    Given a json path to ARC json task, return a single array that contains
+    "max_input_output_pairs" tasks, separated by a padding value.
+    Args:
+        file_path: Path to task to be normalized
+        max_input_output_pairs
+        grid_size: Size of the padded grid
+        padding_value: Padded value
+        verbose
+    """
+
+    def number_to_color(number):
+        colormap = {
+            0: (0, 0, 0),  # Black
+            1: (0, 0, 255),  # Blue
+            2: (255, 0, 0),  # Red
+            3: (0, 255, 0),  # Green
+            4: (255, 255, 0),  # Yellow
+            5: (128, 128, 128),  # Gray
+            6: (128, 0, 128),  # Purple
+            7: (255, 165, 0),  # Orange
+            8: (0, 127, 255),  # Azure
+            9: (165, 42, 42),  # Brown
+            10: (255, 255, 255), # White
+            11: (255, 255, 255) # White
+        }
+        return colormap[number]
+
+    decoded_task = decode_json_task(file_path)
+    if len(decoded_task) < max_input_output_pairs:
+        print(f"Task has less than desired number of input/output pairs({max_input_output_pairs})") if verbose else None
+        return None
+
+    processed_image = np.ones((grid_size * 2 + 1, grid_size * max_input_output_pairs + max_input_output_pairs - 1)) * 11
+
+    # print(len(decoded_task))
+
+    for i in range(max_input_output_pairs):
+
+        input_grid_raw = decoded_task[i].input
+        output_grid_raw = decoded_task[i].output
+
+        if input_grid_raw.shape[0] > 30 or input_grid_raw.shape[1] > 30 or output_grid_raw.shape[0] > 30 or \
+            output_grid_raw.shape[1] > 30:
+            return None
+
+        input_grid = np.pad(input_grid_raw,
+                            ((0, grid_size - input_grid_raw.shape[0]), (0, grid_size - input_grid_raw.shape[1])),
+                            'constant', constant_values=padding_value)
+        output_grid = np.pad(output_grid_raw,
+                             ((0, grid_size - output_grid_raw.shape[0]), (0, grid_size - output_grid_raw.shape[1])),
+                             'constant', constant_values=padding_value)
+
+        assert input_grid.shape == (30, 30)
+        assert output_grid.shape == (30, 30)
+
+        processed_image[0:grid_size,
+        int(i * grid_size) + int(i * 1): int(i * grid_size) + int(i * 1) + grid_size] = input_grid
+        processed_image[grid_size + 1: grid_size + 1 + grid_size,
+        int(i * grid_size) + int(i * 1): int(i * grid_size) + int(i * 1) + grid_size] = output_grid
+
+    # Convert the processed image to an RGB image using the colormap
+    rgb_image = np.zeros((processed_image.shape[0], processed_image.shape[1], 3), dtype=np.uint8)
+    for i in range(processed_image.shape[0]):
+        for j in range(processed_image.shape[1]):
+            rgb_image[i, j] = number_to_color(processed_image[i, j])
+
+    # Define your paths
+    current_path = os.getcwd()
+    output_dir = os.path.join(current_path, 'ARC_tasks_images')
+    output_image_path = os.path.join(output_dir, os.path.basename(output_image_path))
+
+    # Create the directory if it doesn't exist
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+
+    # Save the image as a PNG file
+    image = Image.fromarray(rgb_image)
+    image.save(output_image_path)
+
+    #if verbose:
+     #   print(f"Image saved to {output_image_path}")
+
+    return processed_image
+
 
 
 if __name__ == "__main__":
