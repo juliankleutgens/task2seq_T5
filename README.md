@@ -79,7 +79,9 @@ data/
 ```
 
 
-### Hyperparamter in `config.yaml` File: 
+### Code Structure: 
+<img width="1253" alt="Screenshot 2024-07-10 at 14 43 50" src="https://github.com/juliankleutgens/task2seq_T5/assets/164042205/8936a55e-7412-4a75-92f9-04fcc5c1dc8e">
+
 
 ### Hyperparameters in `config.yaml` File:
 
