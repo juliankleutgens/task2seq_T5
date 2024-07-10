@@ -51,7 +51,7 @@ In the folder "configuration," there are two files: `config.yaml` (used for runn
 The data should be structured in two ways:
 
 1. Save each task as a separate JSON file with the ID in the file name (e.g., `y65h51dw.json`). Then, save all the solvers in one large `solvers.py` file, where you can find the `def solver_y65h51dw` function.
-2. Save both tasks and solvers separately. So, store the task in the '/X/' folder, such as '0k99no11.json', and put the corresponding solver function file into '/Y/' folder like '0k99no11.py'. For the script to recognize this structure, include "training" in the folder name. If you don't want to label it with "training," update the method name in the load_data function in data_scripts/get_datasetframe.py.
+2. Save both tasks and solvers separately. So, store the task in the `/X/` folder, such as `0k99no11.json`, and put the corresponding solver function file into `/Y/` folder like `0k99no11.py`. For the script to recognize this structure, include "training" in the folder name. If you don't want to label it with "training," update the method name in the load_data function in data_scripts/get_datasetframe.py.
 
 ```
 data/
