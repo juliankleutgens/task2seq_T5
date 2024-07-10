@@ -89,7 +89,6 @@ def get_device(model, cfg):
 
     # Print CUDA availability information
     try:
-        print(f"The line torch.cuda.is_available() is {torch.cuda.is_available()}")
         print(f"CUDA Available: {torch.cuda.is_available()}")
         print(f"CUDA Device Count: {torch.cuda.device_count()}")
         if torch.cuda.is_available() and torch.cuda.device_count() > 0:
@@ -101,6 +100,9 @@ def get_device(model, cfg):
     train_on_multiple_gpus = cfg["train_on_multiple_gpus"]
     if cfg["device"] == "cuda" and "n_gpu" in cfg and not train_on_multiple_gpus:
         device = torch.device(f"cuda:{str(cfg['n_gpu'])}")
+    elif cfg["device"] == "cuda" and "n_gpu" in cfg and train_on_multiple_gpus:
+        list_gpus = list(cfg['n_gpu'])
+        device = torch.device("cuda:" + str(list_gpus[0]))
     else:
         device = torch.device("cuda")
 
@@ -169,16 +171,11 @@ def T5Trainer(cfg,dataframe_train,dataframe_test_list, console=Console()):
     model_params = cfg["model_params"]
     extra_tokens = cfg["extra_token"]
 
-    # tokenzier for encoding the text
+    # ----------------- Load the tokenizer and model -----------------
     tokenizer = T5Tokenizer.from_pretrained(model_params["MODEL"])
     model = get_model(cfg)
     model, device = get_device(model, cfg)
 
-    # Define the model and send it to the appropriate device
-
-    # how can I use a model which was fine-tuned on a different dataset and I already have it saved in that location: /Users/juliankleutgens/PycharmProjects/task2seq_T5/outputsgpuserver/output_20240605_0824/model_files/model.safetensors
-
-    # logging
     console.log(f"[Data]: Reading data...\n")
     wandb.log({"data_reading": True})
 
