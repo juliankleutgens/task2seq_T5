@@ -81,33 +81,26 @@ data/
 
 
 ## Code Structure: 
-<img width="1253" alt="Screenshot 2024-07-10 at 14 43 50" src="https://github.com/juliankleutgens/task2seq_T5/assets/164042205/8936a55e-7412-4a75-92f9-04fcc5c1dc8e">
-Certainly! Here’s a more detailed breakdown of the code structure and functionality for each script without any bold formatting:
+<img width="1270" alt="Screenshot 2024-07-10 at 15 11 47" src="https://github.com/juliankleutgens/task2seq_T5/assets/164042205/3e41e5db-d3d2-431a-88fd-0eff5edd00df">
 
 ### 1. main.py
-Function:
-- This is the entry point of the application. It coordinates the overall workflow.
-
-Details:
 - Initialization: Loads the configuration settings from `config.yaml` or `config_test.yaml` depending on the mode.
 - Data Loading: Calls functions from `get_datasetframe.py` to load and preprocess the dataset into a dataframe.
 - Initialization of token mapping for the Representation of the DSL. This is then saved to `dsl_token_mappings_T5.json` and to the output folder
 - Initialization of the output folder with the current timestamp
 
 ### 2. get_datasetframe.py
-Function:
 - Load Data: Reads JSON files containing ARC tasks and organizes them.
 - Preprocesses the dataset with the according `sparse_type`. 
 - Dataframe Creation: Converts the loaded data into a dataframe for easy manipulation and access.
 - In Dataframe is saved: the ID of the task, path to the task, sparse representation, the solver function as a string
 
 ### 3. dataloader.py
-The function is typical Dataloader:
+- typical Dataloader
 - Makes a sparse representation of the solver function and additionally tokenizes it. 
 - Tokenization: Converts input-output pairs from the Dataframe into tokenized formats that the model can process.
 
 ### 4. trainer.py
-Function:
 - Model Initialization: Sets up the T5 model or any specified model architecture for training.
 - Device Initialization
 - Training Loop: calls the in a training loop the train_and_validate function.
