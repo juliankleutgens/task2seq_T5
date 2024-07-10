@@ -100,6 +100,8 @@ The `config.yaml` file specifies several hyperparameters and settings for traini
 - `test_mode`: Boolean to indicate if the test mode is active, then the `config_test.yaml` file is overwriting the configurations (e.g., `true`).
 - `load_new_mappings`: Boolean to decide if new mappings should be loaded (e.g., `true`).
 - `type_of_mapping`: Specifies the type of mapping to be used (e.g., `val2alphabet`).
+   - `val2alphabet`: the variables are mapped to the alphabet (e.g. `x1` -> `A`, `x2` -> `B`, `x3` -> `C`, ...)
+   - `x2y`: the variables are split in single symbols and `x` is mapped to `y`, because the token `x` is already used to represent the input task grids. (e.g. `x1` -> `['y','1']`, `x21` -> `['y','2','1']`, ...)
 
 **Device Configuration:**
 - `device`: The device to run the model on (e.g., `cuda` for GPU).
