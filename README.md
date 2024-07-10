@@ -29,16 +29,19 @@ Results show the T5 model can learn to generate correct and generalizable DSL so
    conda activate task2seq
    ```
 
-3. **Install PyTorch and Related Libraries:**
+3. **Install PyTorch according to the server:**
 
    Install PyTorch, Torchvision, and Torchaudio with CUDA support:
 
+   This is for the 
    ```bash
    pip install torch==1.13.0+cu117 torchvision==0.14.0+cu117 torchaudio==0.13.0+cu117 -f https://download.pytorch.org/whl/torch_stable.html
    ```
 
+   
+4. **Install Related Libraries:**
    ```bash
-   pip install omegaconf torchsummary numpy pandas transformers rich wandb fuzzywuzzy sentencepiece matplotlib rouge nltk
+   pip install omegaconf torchsummary numpy pandas transformers rich wandb fuzzywuzzy sentencepiece matplotlib rouge nltk rapidfuzz inflect Levenshtein
    ```
 
 ### Configuration
