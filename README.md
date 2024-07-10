@@ -90,58 +90,37 @@ Function:
 Details:
 - Initialization: Loads the configuration settings from `config.yaml` or `config_test.yaml` depending on the mode.
 - Data Loading: Calls functions from `get_datasetframe.py` to load and preprocess the dataset into a dataframe.
-- Training: Initializes the training process by calling functions from `trainer.py`.
-- Evaluation: Post-training, it triggers the evaluation process handled by `engine.py`.
-- Logging: Directs output to log files and handles any additional logging setup for monitoring (e.g., wandb).
+- Initialization of token mapping for the Representation of the DSL. This is then saved to `dsl_token_mappings_T5.json` and to the output folder
+- Initialization of the output folder with the current timestamp
 
 ### 2. get_datasetframe.py
 Function:
-- Loads and preprocesses the dataset, transforming it into a dataframe format.
-
-Details:
 - Load Data: Reads JSON files containing ARC tasks and organizes them.
+- Preprocesses the dataset with the according `sparse_type`. 
 - Dataframe Creation: Converts the loaded data into a dataframe for easy manipulation and access.
-- Configuration Handling: Adjusts data loading paths and settings based on the provided configuration, distinguishing between training and testing modes.
+- In Dataframe is saved: the ID of the task, path to the task, sparse representation, the solver function as a string
 
 ### 3. dataloader.py
-Function:
-- Tokenizes the data and prepares it for training.
-
-Details:
-- Tokenization: Converts input-output pairs from the dataframe into tokenized formats that the model can process.
-- Batching: Groups data into batches, ensuring they are correctly formatted for model input.
-- Data Augmentation: Applies any necessary data transformations or augmentations as specified in the configuration.
+The function is typical Dataloader:
+- Makes a sparse representation of the solver function and additionally tokenizes it. 
+- Tokenization: Converts input-output pairs from the Dataframe into tokenized formats that the model can process.
 
 ### 4. trainer.py
 Function:
-- Manages the training process of the model.
-
-Details:
 - Model Initialization: Sets up the T5 model or any specified model architecture for training.
-- Training Loop: Implements the main training loop, including forward passes, loss calculation, and backpropagation.
-- Optimization: Uses specified optimizers and learning rate schedules to update model weights.
-- Checkpointing: Saves model checkpoints periodically for recovery and later use.
-- Metrics Monitoring: Tracks and logs training metrics for performance evaluation.
+- Device Initialization
+- Training Loop: calls the in a training loop the train_and_validate function.
 
 ### 5. engine.py
-Function:
-- Handles inference and evaluation of the trained model.
-
-Details:
-- Model Loading: Loads the trained model from the saved checkpoints.
-- Inference: Applies the model to new, unseen data to generate predictions.
-- Evaluation: Compares model predictions with ground truth to assess performance.
-- Logging: Writes evaluation results to output log files and uploads them to platforms like wandb.com for visualization and further analysis.
-
+- Handles training, and inference evaluation of the trained model in train_and_validate function.
+  
 ### 6. output.log & wandb.com
 Function:
-- Collects and stores logs and results from the training and evaluation processes.
+- The results are plotted with Weights and Baises for each Validation set
+- The generated Data is saved in CSV file for further inspection in the output folder
+   - Saved is the following for every sample: predictions, actuals, avg_bleu_score, bleu_scores, avg_levenshtein_distance, levenshtein_distances, names, codes, accuracies, codes_reconstructed, codes_initializable, outputs_generated, errors, percent_of_seen_pairs  
 
-Details:
-- Logging: Aggregates logs from different stages of the workflow, including training metrics, evaluation scores, and any error messages.
-- Visualization: Provides tools and interfaces for visualizing training progress and evaluation results.
-- Monitoring: Enables continuous monitoring of model performance and health during the training and evaluation phases.
-
+  
 ### Data Flow and Interaction
 
 - Data Ingestion: The process begins with `main.py`, which initiates data loading through `get_datasetframe.py`.
