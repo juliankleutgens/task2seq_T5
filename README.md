@@ -101,7 +101,7 @@ The `config.yaml` file specifies several hyperparameters and settings for traini
 - `load_new_mappings`: Boolean to decide if new mappings should be loaded (e.g., `true`).
 - `type_of_mapping`: Specifies the type of mapping to be used (e.g., `val2alphabet`).
    - `val2alphabet`: the variables are mapped to the alphabet (e.g. `x1` -> `A`, `x2` -> `B`, `x3` -> `C`, ...)
-   - `x2y`: the variables are split in single symbols and `x` is mapped to `y`, because the token `x` is already used to represent the input task grids. (e.g. `x1` -> `['y','1']`, `x21` -> `['y','2','1']`, ...)
+   - `x2y`: the variables are split in single symbols and `x` is mapped to `y`, because the token `x` is already used to represent the input task grids. (e.g. `x1` -> `['y','1']`, `x21` -> `['y','2','1']`, ...). For that the `extra_token: ['sym_aft_func','EoF','BoF','var_to_num']`
 
 **Device Configuration:**
 - `device`: The device to run the model on (e.g., `cuda` for GPU).
@@ -115,7 +115,7 @@ The `config.yaml` file specifies several hyperparameters and settings for traini
 - `output_dir`: Directory to save the output files (e.g., `./outputs/`).
 
 **Extra Tokens:**
-- `extra_token`: List of extra tokens to be used in the representation and then the tokenization (must be: `['sym_aft_func', 'EoF', 'BoF']`).
+- `extra_token`: List of extra tokens to be used in the representation and then the tokenization (should be: `['sym_aft_func', 'EoF', 'BoF']`).
 
 **Loss and Prompting:**
 - `weighted_loss`: Boolean indicating if a weighted loss should be used after 70% of the iterations in an epoch. The generated tokens at the beginning of the sequence are weighted more compared to the others (a scalar is linearly interpolated between 1.5 and 0.5) (e.g., `False`).
