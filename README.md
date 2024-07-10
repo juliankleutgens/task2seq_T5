@@ -33,13 +33,20 @@ Results show the T5 model can learn to generate correct and generalizable DSL so
 
    Install PyTorch, Torchvision, and Torchaudio with CUDA support:
 
-   This is for the 
+   This is for the GPU server "grewegpud1.ethz.ch" at ETH, where we are using the GPU Quadro RTX 6000 with CUDA Version: 11.7
+   
    ```bash
    pip install torch==1.13.0+cu117 torchvision==0.14.0+cu117 torchaudio==0.13.0+cu117 -f https://download.pytorch.org/whl/torch_stable.html
    ```
 
+   For any other case (like you local computer) use the following line:
+   ```bash
+   pip install torch torchvision torchaudio -f https://download.pytorch.org/whl/torch_stable.html
+   ```
+
+
    
-4. **Install Related Libraries:**
+5. **Install Related Libraries:**
    ```bash
    pip install omegaconf torchsummary numpy pandas transformers rich wandb fuzzywuzzy sentencepiece matplotlib rouge nltk rapidfuzz inflect Levenshtein
    ```
