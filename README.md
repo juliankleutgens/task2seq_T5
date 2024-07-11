@@ -123,9 +123,9 @@ To analyze the CSV file, I have used the script `print_and_plot/print_csv.py`. T
 The `config.yaml` file specifies several hyperparameters and settings for training and evaluating the model. Below is an explanation of each key parameter:
 
 **General Parameters:**
-- `max_samples`: The maximum number of samples to use for training (e.g., `5000`).
-- `test_samples`: The number of samples to use for testing (e.g., `10000`).
-- `num_of_itr`: Number of iterations for the training loop (e.g., `5`).
+- `max_samples`: The maximum number of samples to use for training (e.g., `5000`), put to `-1` for loading the whole Dataset. 
+- `test_samples`: The number of samples to use for testing (e.g., `10000`), put to `-1` for loading the whole Dataset. 
+- `num_of_itr`: Number of iterations for the training loop (e.g., `5`), put to `-1` to iterate of the whole Dataset. 
 
 **Paths:**
 - `train_paths`: List of paths where the training data is located.
